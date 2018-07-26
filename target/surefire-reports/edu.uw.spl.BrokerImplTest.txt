@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: edu.uw.spl.BrokerImplTest
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.145 sec - in edu.uw.spl.BrokerImplTest

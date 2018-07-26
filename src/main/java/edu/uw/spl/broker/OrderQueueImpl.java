@@ -80,7 +80,7 @@ public class OrderQueueImpl<T, E extends Order>
                 log.info("{} not dequeued at this time",order.toString());
                 order = null;
             };
-            }
+        }
         
         return order;
     }
@@ -119,7 +119,6 @@ public class OrderQueueImpl<T, E extends Order>
     @Override
     public void setOrderProcessor(Consumer<E> proc) {
         this.orderProcessor = proc;
-        
     }
     
     @Override 

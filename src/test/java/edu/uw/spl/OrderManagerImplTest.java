@@ -2,6 +2,8 @@ package edu.uw.spl;
 
 import static org.junit.Assert.*;
 
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -99,6 +101,14 @@ public class OrderManagerImplTest {
         //when the market opens, all pending stop order queues should dispatch...
         marketOrders.setThreshold(Boolean.TRUE);
         assertEquals(0,marketOrders.length());
+    }
+    
+    @Test
+    public void testGetOrderQueue() {
+        //should return a shallow copy of a TreeSet<Order>
+        TreeSet<StopBuyOrder> ts = orderManager.getStopBuyOrderQueue().getOrderQueue();
+        assertTrue(ts instanceof TreeSet);
+        assertEquals(orderManager.getStopBuyOrderQueue().length(),ts.size());
     }
 
 }
