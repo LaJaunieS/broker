@@ -60,11 +60,8 @@ public class BrokerImpl implements Broker, ExchangeListener {
     private Consumer<StopSellOrder> moveSellToMarketOrderProcessor = 
             (order)-> marketOrders.enqueue(order);
     
-    private Consumer<Order> marketOrderProcessor = (order)->{
-            this.executeOrder(order);
-    };
+    private Consumer<Order> marketOrderProcessor = (order)-> this.executeOrder(order);
 
-    
     /**
      * Constructor
      * 
