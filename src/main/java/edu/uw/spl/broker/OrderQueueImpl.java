@@ -100,7 +100,7 @@ public class OrderQueueImpl<T, E extends Order>
                 this.orderProcessor.accept(order);
                 log.info("dispatched order {}",order.toString());
             } else {
-                log.info("Nothing to dispatch at this time");
+                log.info("Order processor is null, nothing dispatched");
             }
         }
     }
@@ -131,4 +131,18 @@ public class OrderQueueImpl<T, E extends Order>
         }
         return builder.toString();
     }
+    
+    public int length() {
+        return this.orderQueue.size();
+    }
+
+    public TreeSet<E> getOrderQueue() {
+        return (TreeSet<E>) orderQueue.clone();
+    }
+    
+    public BiPredicate<T,E> getDispatchFilter() {
+        return this.dispatchFilter;
+    }
+    
+    
 }

@@ -1,7 +1,3 @@
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\OrderManagerTest.java
 C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\TestSuite.java
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\AbstractOrderQueueTest.java
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\BrokerTest.java
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\OrderQueueTest.java
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\AbstractOrderManagerTest.java
-C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\AccountManagerTest.java
+C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\OrderManagerImplTest.java
+C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3\src\test\java\edu\uw\spl\BrokerImplTest.java

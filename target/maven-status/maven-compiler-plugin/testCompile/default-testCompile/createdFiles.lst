@@ -1,12 +1,3 @@
-edu\uw\spl\AbstractOrderQueueTest$TestBuyFilter.class
+edu\uw\spl\BrokerImplTest.class
 edu\uw\spl\TestSuite.class
-edu\uw\spl\AbstractOrderQueueTest.class
-edu\uw\spl\OrderManagerTest.class
-edu\uw\spl\AbstractOrderManagerTest$TestBuyOrderProcssor.class
-edu\uw\spl\OrderQueueTest.class
-edu\uw\spl\AbstractOrderQueueTest$TestSellFilter.class
-edu\uw\spl\AbstractOrderManagerTest.class
-edu\uw\spl\AbstractOrderQueueTest$TestQtyFilter.class
-edu\uw\spl\AccountManagerTest.class
-edu\uw\spl\AbstractOrderManagerTest$TestSellOrderProcssor.class
-edu\uw\spl\BrokerTest.class
+edu\uw\spl\OrderManagerImplTest.class
