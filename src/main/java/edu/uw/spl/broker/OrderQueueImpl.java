@@ -140,9 +140,4 @@ public class OrderQueueImpl<T, E extends Order>
         return (TreeSet<E>) orderQueue.clone();
     }
     
-    public BiPredicate<T,E> getDispatchFilter() {
-        return this.dispatchFilter;
-    }
-    
-    
 }

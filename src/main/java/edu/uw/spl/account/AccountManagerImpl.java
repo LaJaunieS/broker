@@ -1,6 +1,5 @@
 package edu.uw.spl.account;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -9,7 +8,6 @@ import edu.uw.ext.framework.account.Account;
 import edu.uw.ext.framework.account.AccountException;
 import edu.uw.ext.framework.account.AccountFactory;
 import edu.uw.ext.framework.dao.AccountDao;
-import edu.uw.ext.framework.account.AccountManagerFactory;
 import edu.uw.ext.framework.account.AccountManager;
 
 import edu.uw.spl.account.AccountFactoryImpl;

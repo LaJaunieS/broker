@@ -32,10 +32,6 @@ public class OrderManagerImplTest {
     
     private Consumer<StopSellOrder> moveSellToMarketOrderProcessor;
     
-    private BiPredicate<Integer,StopSellOrder> sSellOrderDispatchFilter;
-    
-    private BiPredicate<Integer,StopBuyOrder> sBuyOrderDispatchFilter;
-    
     private Consumer<Order> marketOrderProcessor;
     
     @Before
@@ -72,9 +68,6 @@ public class OrderManagerImplTest {
         orderManager.queueOrder(new StopSellOrder("neotheone",50,"MSFT",450));
         orderManager.queueOrder(new StopSellOrder("neotheone",30,"MSFT",450));
         orderManager.queueOrder(new StopSellOrder("neotheone",40,"MSFT",350));
-   
-        System.out.println(orderManager.getStopBuyOrderQueue().getDispatchFilter());
-        System.out.println(orderManager.getStopSellOrderQueue().getDispatchFilter());
     };
     
     

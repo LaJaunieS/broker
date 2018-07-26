@@ -24,9 +24,7 @@ import edu.uw.ext.framework.order.MarketSellOrder;
 import edu.uw.ext.framework.order.Order;
 import edu.uw.ext.framework.order.StopBuyOrder;
 import edu.uw.ext.framework.order.StopSellOrder;
-import edu.uw.spl.account.AccountManagerFactoryImpl;
 import edu.uw.spl.broker.BrokerFactoryImpl;
-import edu.uw.spl.broker.BrokerImpl;
 
 public class BrokerImplTest {
     
@@ -143,6 +141,8 @@ public class BrokerImplTest {
     public void testRequestQuote() {
         try {
             StockQuote quote = broker.requestQuote(app.ExchangeFactory.SYMBOL_CDYN);
+            assertEquals(app.ExchangeFactory.SYMBOL_CDYN,quote.getTicker());
+            assertEquals(app.ExchangeFactory.INITIAL_PRICE_CDYN,quote.getPrice());
         } catch (BrokerException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

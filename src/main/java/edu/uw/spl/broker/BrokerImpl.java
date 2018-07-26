@@ -232,9 +232,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
         if (stockQuote == null) {
             throw new BrokerException("Requested stock not listed");
         }
-        
         return stockQuote;
-        
     }
     
     /*ExchangeListener methods...*/

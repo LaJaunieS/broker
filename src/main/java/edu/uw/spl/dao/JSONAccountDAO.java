@@ -4,13 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.NullNode;
 import edu.uw.ext.framework.account.Account;
 import edu.uw.ext.framework.account.AccountException;
 import edu.uw.ext.framework.account.Address;
@@ -125,8 +122,8 @@ public class JSONAccountDAO extends AccountDAOs implements AccountDao, DaoFactor
         log.info("Json for account {} updated",accountName);
     }
 
-    /*Used for testing*/
-    public static void main(String[] args) {
+    /*Used for testing, otherwise ignore*/
+    /*public static void main(String[] args) {
         try (ClassPathXmlApplicationContext context = 
                 new ClassPathXmlApplicationContext("context.xml");
                 )
@@ -225,5 +222,5 @@ public class JSONAccountDAO extends AccountDAOs implements AccountDao, DaoFactor
             }
         }
     }
-    
+    */
 }

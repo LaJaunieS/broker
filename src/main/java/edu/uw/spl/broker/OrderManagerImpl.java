@@ -5,11 +5,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import edu.uw.ext.framework.broker.OrderManager;
-import edu.uw.ext.framework.order.AbstractOrder;
-import edu.uw.ext.framework.order.MarketBuyOrder;
-import edu.uw.ext.framework.order.MarketOrder;
-import edu.uw.ext.framework.order.MarketSellOrder;
-import edu.uw.ext.framework.order.Order;
 import edu.uw.ext.framework.order.StopBuyOrder;
 import edu.uw.ext.framework.order.StopSellOrder;
 

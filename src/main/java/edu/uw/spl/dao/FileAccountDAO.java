@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -14,24 +13,17 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import edu.uw.ext.framework.account.Account;
 import edu.uw.ext.framework.account.AccountException;
-import edu.uw.ext.framework.account.AccountFactory;
 import edu.uw.ext.framework.account.Address;
 import edu.uw.ext.framework.account.CreditCard;
 import edu.uw.ext.framework.dao.AccountDao;
 import edu.uw.ext.framework.dao.DaoFactoryException;
-import edu.uw.spl.account.AccountFactoryImpl;
 import edu.uw.spl.account.AccountImpl;
 import edu.uw.spl.account.CreditCardImpl;
 import edu.uw.ext.framework.dao.DaoFactory;
 
 import edu.uw.spl.account.AddressImpl;
-import edu.uw.spl.account.CreditCardImpl;
-import edu.uw.spl.account.AccountImpl;
 
 /**Implentation which defines the methods needed to get, store, and delete accounts
  * from a persistent storage mechanism.  
