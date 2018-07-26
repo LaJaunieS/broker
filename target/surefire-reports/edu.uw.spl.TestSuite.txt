@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: edu.uw.spl.TestSuite
 -------------------------------------------------------------------------------
-Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.798 sec - in edu.uw.spl.TestSuite
+Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.781 sec - in edu.uw.spl.TestSuite

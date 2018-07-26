@@ -84,7 +84,6 @@ public class BrokerImpl implements Broker, ExchangeListener {
         marketOrders.setOrderProcessor(marketOrderProcessor);
         
         /*Instantiate an order manager for each stock in the exchange*/
-        //Russ puts this in a separate methods initializeOrderMaangers()
         for (String stock : exchange.getTickers()) {
             StockQuote quote  = exchange.getQuote(stock);
             String ticker = quote.getTicker();
@@ -104,7 +103,6 @@ public class BrokerImpl implements Broker, ExchangeListener {
             } else {
                 log.warn("Unable to add order manager to queue");
             }
-            
         }
         
         /*....Register this Broker to listen for exchange events*/
@@ -139,7 +137,6 @@ public class BrokerImpl implements Broker, ExchangeListener {
        
        /*If account != null return it*/
        return account;
-       
     }
 
     @Override
