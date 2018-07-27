@@ -25,6 +25,7 @@ import edu.uw.ext.framework.order.StopSellOrder;
 /**Implementation of the Broker interface. Interacts with the AccountManager 
  * to create Accounts, get/set Accounts, delete Accounts, or process Orders
  * on behalf of an Account
+ * @author slajaunie
  */
 public class BrokerImpl implements Broker, ExchangeListener {
 
@@ -40,10 +41,9 @@ public class BrokerImpl implements Broker, ExchangeListener {
     /**The exchange this broker will interact with*/
     private StockExchange exchange;
     
-    /**TreeMap of tickers in the exchange
+    /**HashMap of tickers in the exchange
      *  Key - stock symbol
     *   OrderManager - an OrderManager instance for each stock*/
-    //TODO consider other map implementations?
     private HashMap<String,OrderManager> orderManagers;
     
     /**Dispatch filter for market orders*/
@@ -53,18 +53,23 @@ public class BrokerImpl implements Broker, ExchangeListener {
     /**Order queue for the market orders*/
     private OrderQueueImpl<Boolean,Order> marketOrders; 
             
-    /*The Consumers/OrderProcessors*/
+    /**The Consumer/OrderProcessor for StopBuyOrders*/
     private Consumer<StopBuyOrder> moveBuyToMarketOrderProcessor = 
             (order)-> marketOrders.enqueue(order);
-        
+    
+    /**The Consumer/OrderProcessor for StopSellOrders*/
     private Consumer<StopSellOrder> moveSellToMarketOrderProcessor = 
             (order)-> marketOrders.enqueue(order);
     
+    /**The Consumer/OrderProcessor for market orders*/
     private Consumer<Order> marketOrderProcessor = (order)-> this.executeOrder(order);
 
     /**
-     * Constructor
-     * 
+     * Constructor- 
+     * Instantiates a new Broker implementation
+     * @param name the name of this Broker
+     * @param acctMgr the AccountManager instance that will be associated with this broker
+     * @param exchange The exchange this broker will interact with
      * */
     public BrokerImpl(String name, AccountManager acctMgr, StockExchange exchange) {
         /*Set the internal fields...*/
@@ -109,6 +114,11 @@ public class BrokerImpl implements Broker, ExchangeListener {
         exchange.addExchangeListener(this);
     }
     
+    /**Attempts to close resources being used by this broker. If unable to close due
+     * to an <code>AccountException</code>, will throw a <code>BrokerException</code>
+     * @see edu.uw.ext.framework.broker.Broker#close()
+     * @throws BrokerException if unable to close resources, or receives an exception
+     */
     @Override
     public void close() throws BrokerException {
        try {
@@ -119,6 +129,17 @@ public class BrokerImpl implements Broker, ExchangeListener {
        }
     }
 
+    /**
+     * Creates a new account utilizing the AccountManager. If the AccountManager throws
+     * an <code>AccountException</code> will throw a <code>BrokerException</code> and return
+     * null
+     * @see edu.uw.ext.framework.broker.Broker#createAccount(java.lang.String, java.lang.String, int)
+     * @param username the username of the account
+     * @param password the password of the account
+     * @param balance the initial balance of the account. 
+     * @return account the newly created account, or null if an exception is thrown
+     * @throws BrokerException if there was a problem creating the account
+     */
     @Override
     public Account createAccount(String username, String password, int balance) 
             throws BrokerException {
@@ -139,6 +160,10 @@ public class BrokerImpl implements Broker, ExchangeListener {
        return account;
     }
 
+    /**Removes the account from the directory via the AccountManager
+     * @param username the name of the account to remove
+     * @throws BrokerException if the operation failed
+     */
     @Override
     public void deleteAccount(String username) throws BrokerException {
         try {
@@ -149,6 +174,15 @@ public class BrokerImpl implements Broker, ExchangeListener {
         
     }
 
+    /**Look up an account based on the given account name and password, and returns that account,
+     * or <code>null</code> if the account was not located in the directory, or the provided
+     * password is incorrect 
+     * @param username the name of the account to retrieve
+     * @param password the password of the account to retrieve
+     * @return the account associated with the given account name, or null if the 
+     * account was not located in the directory or the provided password was incorrect
+     * @throws BrokerException if the operation failed
+     */
     @Override
     public Account getAccount(String username, String password) throws BrokerException {
         boolean validated = false;
@@ -175,6 +209,9 @@ public class BrokerImpl implements Broker, ExchangeListener {
         return account;
     }
 
+    /**Utility function that processes a market order
+     * @param order an order to be processed
+     */
     private void executeOrder(Order order) {
         try {
             accountManager.getAccount(order.getAccountId())
@@ -184,16 +221,32 @@ public class BrokerImpl implements Broker, ExchangeListener {
         }
     }
     
+    /** Places a Market Buy Order
+     * @see edu.uw.ext.framework.broker.Broker#placeOrder(edu.uw.ext.framework.order.MarketBuyOrder)
+     * @param order the order to be placed
+     * @throws BrokerException if the operation failed
+     */
     @Override
     public void placeOrder(MarketBuyOrder order) throws BrokerException {
         this.marketOrders.enqueue(order);
     }
 
+    /**Places a Market Sell Order
+     * @see edu.uw.ext.framework.broker.Broker#placeOrder(edu.uw.ext.framework.order.MarketSellOrder)
+     * @param order the order to be placed
+     * @throws BrokerException if the operation failed
+     */
     @Override
     public void placeOrder(MarketSellOrder order) throws BrokerException {
         this.marketOrders.enqueue(order);
     }
 
+    /**Places a Stop Buy Order
+     * @see edu.uw.ext.framework.broker.Broker#placeOrder(edu.uw.ext.framework.order.StopBuyOrder)
+     * @param order the order to be placed
+     * @throws BrokerException if the Order Manager is unable to locate the stock associated
+     * with the given order, or the operation fails
+     */
     @Override
     public void placeOrder(StopBuyOrder order) throws BrokerException {
         OrderManager om = this.orderManagers.get(order.getStockTicker());
@@ -205,6 +258,13 @@ public class BrokerImpl implements Broker, ExchangeListener {
         }
     }
 
+
+    /**Places a Stop Sell Order
+     * @see edu.uw.ext.framework.broker.Broker#placeOrder(edu.uw.ext.framework.order.StopBuyOrder)
+     * @param order the order to be placed
+     * @throws BrokerException if the Order Manager is unable to locate the stock associated
+     * with the given order, or the operation fails
+     */
     @Override
     public void placeOrder(StopSellOrder order) throws BrokerException {
         OrderManager om = this.orderManagers.get(order.getStockTicker());
@@ -216,6 +276,12 @@ public class BrokerImpl implements Broker, ExchangeListener {
         }
     }
 
+    /**Obtains a Stock Quote for the given stock, containing the stock's symbol and 
+     * current price
+     * @see edu.uw.ext.framework.broker.Broker#requestQuote(java.lang.String)
+     * @param ticker the stock's ticker symbol
+     * @throws BrokerException if unable to locate the requested stock in the exchange
+     */
     @Override
     public StockQuote requestQuote(String ticker) throws BrokerException {
         /*Get a quote using the given stock symbol
@@ -230,6 +296,12 @@ public class BrokerImpl implements Broker, ExchangeListener {
     }
     
     /*ExchangeListener methods...*/
+    
+    /**Updates the Market Order queue's threshold to reflect the exchange has closed, upon 
+     * receiving a close event from the exchange
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#exchangeClosed(edu.uw.ext.framework.exchange.ExchangeEvent)
+     * @param evt the close event from the exchange
+     */
     @Override
     public void exchangeClosed(ExchangeEvent evt) {
         //emit event to lsteners that exchange is closed
@@ -237,6 +309,11 @@ public class BrokerImpl implements Broker, ExchangeListener {
         log.info("******Exchange is closed******");
     }
 
+    /**Updates the Market Order queue's threshold to reflect the exchange has opened, upon 
+     * receiving a open event from the exchange
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#exchangeClosed(edu.uw.ext.framework.exchange.ExchangeEvent)
+     * @param evt the open event from the exchange
+     */
     @Override
     public void exchangeOpened(ExchangeEvent evt) {
       //emit event to lsteners that exchange is open
@@ -245,6 +322,11 @@ public class BrokerImpl implements Broker, ExchangeListener {
         log.info("*****Exchange is open******");
     }
 
+    /**Updates the Stop Order queues' thresholds to reflect the price of a stock has changed, upon 
+     * receiving a price change event from the exchange
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#exchangeClosed(edu.uw.ext.framework.exchange.ExchangeEvent)
+     * @param evt the price change event from the exchange
+     */
     @Override
     public void priceChanged(ExchangeEvent evt) {
         //emit event to listeners that price of the order manager's stock has changed
@@ -253,6 +335,10 @@ public class BrokerImpl implements Broker, ExchangeListener {
         om.adjustPrice(evt.getPrice());
     }
 
+    /**Obtains the name of this broker
+     * @see edu.uw.ext.framework.broker.Broker#getName()
+     * @return a string reflecting the name of this broker
+     */
     @Override
     public String getName() {
         return this.name;

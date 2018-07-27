@@ -11,7 +11,13 @@ import org.slf4j.LoggerFactory;
 import edu.uw.ext.framework.broker.OrderQueue;
 import edu.uw.ext.framework.order.Order;
 
-public class OrderQueueImpl<T, E extends Order> 
+/**
+ * Implementation of OrderQueue, using a TreeSet to store Orders
+ * @author slajaunie
+ * @param T the dispatch threshold type
+ * @param E the type of order contained in the queue
+ */
+public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order> 
                                 implements OrderQueue<T, E> {
 
     private static final Logger log = LoggerFactory.getLogger(OrderQueueImpl.class);
@@ -25,16 +31,23 @@ public class OrderQueueImpl<T, E extends Order>
      * if a Market Order queue, it will be a boolean (market open/closed?)*/
     private T threshold; 
     
+    /**
+     * Dispatches orders for processing that meet the given threshold 
+     */
     private final BiPredicate<T,E> dispatchFilter;
     
     /**The Consumer that processes orders when they become dispatchable*/
     private Consumer<E> orderProcessor;
     
     /**
-     * Constructor
-     * 
      * The market order implementation constructor- 
-     * The threshold will be a boolean testing whether market is open or close*/
+     * 
+     * The threshold will be a boolean testing whether market is open or closed
+     * @param threshold the initial threshold
+     * @param dispatchFilter the dispatch filter that will be used to control dispatching orders
+     * from the queue
+     *  
+     * */
     public OrderQueueImpl( T threshold, BiPredicate<T,E> dispatchFilter) {
         this.orderQueue = new TreeSet<>();
         this.threshold = threshold;
@@ -42,10 +55,14 @@ public class OrderQueueImpl<T, E extends Order>
     }
     
     /**
-     * Constructor
-     * 
      * The StopBuy/StopSell order implementation constructor- 
-     * The threshold will be an Integer that is the stop price*/
+     * 
+     * The threshold will be an Integer that is the stop price
+     * @param threshold the initial threshold
+     * @param dispatchFilter the dispatch filter that will be used to control dispatching orders
+     * from the queue
+     * @param cmp the Comparator controlling the ordering of orders added to this queue
+     * */
     public OrderQueueImpl( T threshold, BiPredicate<T,E> dispatchFilter, Comparator<E> cmp) {
         /*Initialize the treeSet with the comparator argument*/
         this.orderQueue = new TreeSet<E>(cmp);
@@ -53,6 +70,11 @@ public class OrderQueueImpl<T, E extends Order>
         this.dispatchFilter = dispatchFilter;
     }
     
+    /** Adds the specified order to the queue. Dispatches any dispatchable orders after
+     * placing the given order into the queue 
+     * @see edu.uw.ext.framework.broker.OrderQueue#enqueue(edu.uw.ext.framework.order.Order)
+     * @param order an order to place in the queue
+     */
     @Override
     public void enqueue(final E order) {
         /*Dispatch any dispatchable orders after adding the new order to the queue*/
@@ -60,6 +82,13 @@ public class OrderQueueImpl<T, E extends Order>
         dispatchOrders();
     }
 
+    /**Removes the highest dispatchable order in the queue. If there are orders in the 
+     * queue but they do not meet the dispatch threshold order will not be removed and 
+     * null will be returned.
+     * @see edu.uw.ext.framework.broker.OrderQueue#dequeue()
+     * @return the first dispatchable order in the queue, or null if there are no dispatchable 
+     * orders in the queue
+     */
     @Override
     public E dequeue() {
         /*If the first order in the list meets the dispatch threshold
@@ -85,6 +114,12 @@ public class OrderQueueImpl<T, E extends Order>
         return order;
     }
 
+    /** Executes the callback for each dispatchable order. Each dispatchable order is in turn 
+     * removed from the queue and passed to the callback. If no callback is registered (ie, null)
+     * the order is simply removed from the queue.
+     * @see edu.uw.ext.framework.broker.OrderQueue#dispatchOrders()
+     * 
+     */
     @Override
     public void dispatchOrders() {
         /*capture the first dispatchable order in the queue, if any, derived
@@ -105,22 +140,38 @@ public class OrderQueueImpl<T, E extends Order>
         }
     }
 
+    /** Obtains the current threshold value
+     * @see edu.uw.ext.framework.broker.OrderQueue#getThreshold()
+     * @return the current threshold value
+     */
     @Override
     public T getThreshold() {
         return this.threshold;
     }
 
+    /**Sets the threshold value
+     * @see edu.uw.ext.framework.broker.OrderQueue#setThreshold(java.lang.Object)
+     * @param threshold the new threshold value
+     */
     @Override
     public void setThreshold(final T threshold) {
         this.threshold = threshold;
         dispatchOrders();
     }
 
+    /**Sets the order processor that will process dispatchable orders
+     * @see edu.uw.ext.framework.broker.OrderQueue#setOrderProcessor(java.util.function.Consumer)
+     */
     @Override
     public void setOrderProcessor(Consumer<E> proc) {
         this.orderProcessor = proc;
     }
     
+    /**Outputs a formatted string of the contents of the order queue, 
+     * printing a string representing every order in the queue
+     * @see java.lang.Object#toString()
+     * @return a formatted string of the order queue
+     */
     @Override 
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -131,10 +182,16 @@ public class OrderQueueImpl<T, E extends Order>
         return builder.toString();
     }
     
+    /**Outputs the number of orders currently contained in the order queue
+     * @return an int representing the number of orders currently contained in the order queue
+     */
     public int length() {
         return this.orderQueue.size();
     }
 
+    /**Returns a shallow copy of the TreeSet containing the orders in this queue
+     * @return a shallow copy of the TreeSet containing the orders in this queue
+     */
     public TreeSet<E> getOrderQueue() {
         return (TreeSet<E>) orderQueue.clone();
     }
