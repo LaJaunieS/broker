@@ -81,12 +81,19 @@ public class OrderManagerImpl implements OrderManager {
      */
     public OrderManagerImpl(String symbol, int price) {
         this(symbol);
-        stopSellOrderQueue = new OrderQueueImpl<Integer, StopSellOrder>(price, 
+        Thread stopSellOrderThread = new Thread(new OrderQueueImpl<Integer, StopSellOrder>(price, 
                 sSellOrderDispatchFilter, 
-                sSellOrderComparator);
-        stopBuyOrderQueue = new OrderQueueImpl<Integer, StopBuyOrder>(price, 
+                sSellOrderComparator),"stopSellOrderThread");
+        Thread stopBuyOrderThread = new Thread(new OrderQueueImpl<Integer, StopBuyOrder>(price, 
                                                             sBuyOrderDispatchFilter, 
-                                                            sBuyOrderComparator);
+                                                            sBuyOrderComparator),"stopBuyOrderThread");
+        
+    }
+    
+    //TODO working...
+    public void initiateDispatchThread(Runnable r) {
+        //call run(), which will dispatchOrders();
+        new Thread(r).start();
     }
     
     /**Adjusts the price of this order manager in response to a change in the stock's price,

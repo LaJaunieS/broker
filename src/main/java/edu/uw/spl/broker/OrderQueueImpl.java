@@ -2,6 +2,7 @@ package edu.uw.spl.broker;
 
 import java.util.Comparator;
 import java.util.TreeSet;
+import java.util.concurrent.Executor;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -18,7 +19,7 @@ import edu.uw.ext.framework.order.Order;
  * @param E the type of order contained in the queue
  */
 public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order> 
-                                implements OrderQueue<T, E> {
+                                implements OrderQueue<T, E>, Runnable{
 
     private static final Logger log = LoggerFactory.getLogger(OrderQueueImpl.class);
     
@@ -39,7 +40,7 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     /**The Consumer that processes orders when they become dispatchable*/
     private Consumer<E> orderProcessor;
     
-    /**
+        /**
      * The market order implementation constructor- 
      * 
      * The threshold will be a boolean testing whether market is open or closed
@@ -114,6 +115,17 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
         return order;
     }
 
+    
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+        //create a new dispatching thread that handles dispatching orders in 
+        //a thread separate from the main thread
+        //dispatches all orders currently in the queue
+        //just thisvv? Then the orderManager instantiates a new Thread and start() it?
+         this.dispatchOrders();
+
+    }
     /** Executes the callback for each dispatchable order. Each dispatchable order is in turn 
      * removed from the queue and passed to the callback. If no callback is registered (ie, null)
      * the order is simply removed from the queue.
@@ -124,6 +136,19 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     public void dispatchOrders() {
         /*capture the first dispatchable order in the queue, if any, derived
          * from invoking the dispatch filter*/
+        
+        //TODO Assignment4-  dispatching performed on a separate thread, initiates the 
+        /*dispatching on a separate (not the calling) thread
+         * So this means you'll have the main thread, and then a single
+         * dispatching thread where the dispatching occurs?
+         * Whenever, an order is added to the queue or the stock price changes the 
+         * dispatching thread should automatically begin dispatching any dispatchable items. 
+         * The OrderQueue implementation should either extend Thread, implement Runnable 
+         * or have a helper class that does. This is where the dispatching should be performed. 
+         * Each invocation of dispatchOrders should NOT create a new thread. 
+         * Alternatively, you may take advantage of the Executor framework. 
+         * This must all be accomplished without using synchronized, wait, or notify.*/
+        
         E order; 
         /*Send dispatchable orders to the market order queue*/
         /*If dequeue tests return a null order, nothing to dispatch and do nothing*/
@@ -143,6 +168,7 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     /** Obtains the current threshold value
      * @see edu.uw.ext.framework.broker.OrderQueue#getThreshold()
      * @return the current threshold value
+     * 
      */
     @Override
     public T getThreshold() {
@@ -195,5 +221,6 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     public TreeSet<E> getOrderQueue() {
         return (TreeSet<E>) orderQueue.clone();
     }
+
     
 }

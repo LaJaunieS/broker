@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="edu.uw.spl.TestSuite" time="23.221" tests="24" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="edu.uw.spl.TestSuite" time="23.147" tests="24" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_161\jre\bin"/>
     <property name="java.vm.version" value="25.161-b12"/>
     <property name="java.vm.vendor" value="Oracle Corporation"/>
-    <property name="maven.multiModuleProjectDirectory" value="C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3"/>
+    <property name="maven.multiModuleProjectDirectory" value="C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-4"/>
     <property name="java.vendor.url" value="http://java.oracle.com/"/>
     <property name="path.separator" value=";"/>
     <property name="guice.disable.misplaced.annotation.check" value="true"/>
@@ -16,7 +16,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.os.patch.level" value=""/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="user.dir" value="C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-3"/>
+    <property name="user.dir" value="C:\Users\slajaunie\eclipse-workspace\CP130-Assignment-4"/>
     <property name="java.runtime.version" value="1.8.0_161-b12"/>
     <property name="java.awt.graphicsenv" value="sun.awt.Win32GraphicsEnvironment"/>
     <property name="java.endorsed.dirs" value="C:\Program Files\Java\jdk1.8.0_161\jre\lib\endorsed"/>
@@ -45,7 +45,7 @@
     <property name="java.vm.specification.version" value="1.8"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.home" value="C:\Program Files\Java\jdk1.8.0_161\jre"/>
-    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher clean compile test"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
     <property name="java.specification.vendor" value="Oracle Corporation"/>
     <property name="user.language" value="en"/>
     <property name="awt.toolkit" value="sun.awt.windows.WToolkit"/>
@@ -64,28 +64,28 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase name="testBadNameAccountCreation" classname="test.AccountTest" time="0.12"/>
-  <testcase name="testBadBalanceAccountCreation" classname="test.AccountTest" time="0.115"/>
+  <testcase name="testBadNameAccountCreation" classname="test.AccountTest" time="0.155"/>
+  <testcase name="testBadBalanceAccountCreation" classname="test.AccountTest" time="0.089"/>
   <testcase name="testGoodAccountCreation" classname="test.AccountTest" time="0"/>
   <testcase name="testSetAccountName" classname="test.AccountTest" time="0"/>
   <testcase name="testReloadFile" classname="test.AccountManagerTest" time="0"/>
-  <testcase name="testCreateDuplicateUsername" classname="test.AccountManagerTest" time="0.004"/>
-  <testcase name="testClose" classname="test.AccountManagerTest" time="0.04"/>
-  <testcase name="testPersist" classname="test.AccountManagerTest" time="0.043"/>
+  <testcase name="testCreateDuplicateUsername" classname="test.AccountManagerTest" time="0.005"/>
+  <testcase name="testClose" classname="test.AccountManagerTest" time="0"/>
+  <testcase name="testPersist" classname="test.AccountManagerTest" time="0.036"/>
   <testcase name="testGetAccount" classname="test.AccountManagerTest" time="0.034"/>
   <testcase name="testValidate" classname="test.AccountManagerTest" time="0.037"/>
-  <testcase name="testRegistration" classname="test.AccountManagerTest" time="0.052"/>
-  <testcase name="testDeleteAccount" classname="test.AccountManagerTest" time="0.058"/>
-  <testcase name="testMultipleGetAccount" classname="test.AccountManagerTest" time="0.048"/>
-  <testcase name="testClose" classname="test.DaoTest" time="0.081"/>
-  <testcase name="testReset" classname="test.DaoTest" time="0.035"/>
-  <testcase name="testDelete" classname="test.DaoTest" time="0.036"/>
-  <testcase name="testReload" classname="test.DaoTest" time="0.036"/>
-  <testcase name="testSetGet" classname="test.DaoTest" time="0.054"/>
+  <testcase name="testRegistration" classname="test.AccountManagerTest" time="0.043"/>
+  <testcase name="testDeleteAccount" classname="test.AccountManagerTest" time="0.034"/>
+  <testcase name="testMultipleGetAccount" classname="test.AccountManagerTest" time="0.035"/>
+  <testcase name="testClose" classname="test.DaoTest" time="0.075"/>
+  <testcase name="testReset" classname="test.DaoTest" time="0.043"/>
+  <testcase name="testDelete" classname="test.DaoTest" time="0.077"/>
+  <testcase name="testReload" classname="test.DaoTest" time="0.047"/>
+  <testcase name="testSetGet" classname="test.DaoTest" time="0.049"/>
   <testcase name="testRequestQuote" classname="test.BrokerTest" time="0.021"/>
-  <testcase name="testClose" classname="test.BrokerTest" time="0.017"/>
-  <testcase name="testGetAccount" classname="test.BrokerTest" time="0.035"/>
-  <testcase name="testBrokerExchangeOpen" classname="test.BrokerTest" time="10.158"/>
-  <testcase name="testDeleteAccount" classname="test.BrokerTest" time="0.041"/>
-  <testcase name="testBrokerExchangeClosed" classname="test.BrokerTest" time="12.144"/>
+  <testcase name="testClose" classname="test.BrokerTest" time="0.02"/>
+  <testcase name="testGetAccount" classname="test.BrokerTest" time="0.034"/>
+  <testcase name="testBrokerExchangeOpen" classname="test.BrokerTest" time="10.135"/>
+  <testcase name="testDeleteAccount" classname="test.BrokerTest" time="0.054"/>
+  <testcase name="testBrokerExchangeClosed" classname="test.BrokerTest" time="12.099"/>
 </testsuite>
