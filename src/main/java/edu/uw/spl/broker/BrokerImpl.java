@@ -48,7 +48,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
     
     /**Dispatch filter for market orders*/
     private BiPredicate<Boolean,Order> mOrderDispatchFilter = 
-            (threshold,order)-> exchange.isOpen();
+            (threshold,order)-> threshold;
     
     /**Order queue for the market orders*/
     private OrderQueueImpl<Boolean,Order> marketOrders; 
@@ -76,6 +76,8 @@ public class BrokerImpl implements Broker, ExchangeListener {
         this.name = name;
         this.accountManager = acctMgr;
         this.exchange = exchange;
+        
+        
         
         /*....Get stock symbols in the exchange and initialize the tickers map
          * with newly-instantiated OrderManagers for each stock... 
@@ -124,6 +126,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
        try {
         accountManager.close();
         accountManager = null;
+        exchange.removeExchangeListener(this);
        } catch (AccountException e) {
            throw new BrokerException("Broker unable to close resources",e);
        }

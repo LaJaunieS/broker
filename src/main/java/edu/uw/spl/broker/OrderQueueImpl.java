@@ -3,6 +3,8 @@ package edu.uw.spl.broker;
 import java.util.Comparator;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -31,6 +33,9 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     /**The threshold value- if StopBuy/StopSell queue, it will be an int (the target/stop price);
      * if a Market Order queue, it will be a boolean (market open/closed?)*/
     private T threshold; 
+    
+    private Lock lock;
+    private Condition condition;
     
     /**
      * Dispatches orders for processing that meet the given threshold 

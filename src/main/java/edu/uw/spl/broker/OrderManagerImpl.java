@@ -75,25 +75,30 @@ public class OrderManagerImpl implements OrderManager {
         this.symbol = symbol;
     }
     
-    /**Constructor
+    /**Constructor. Instantiates separate a Stop Sell OrderQueue and a Stop Buy OrderQueue
+     * in separate threads
      * @param symbol the stock symbol to be associated with this order manager
      * @param price the current price of the stock at the time of instantiation
      */
     public OrderManagerImpl(String symbol, int price) {
         this(symbol);
-        Thread stopSellOrderThread = new Thread(new OrderQueueImpl<Integer, StopSellOrder>(price, 
+        stopSellOrderQueue = new OrderQueueImpl<Integer, StopSellOrder>(price, 
                 sSellOrderDispatchFilter, 
-                sSellOrderComparator),"stopSellOrderThread");
-        Thread stopBuyOrderThread = new Thread(new OrderQueueImpl<Integer, StopBuyOrder>(price, 
+                sSellOrderComparator);
+        stopBuyOrderQueue = new OrderQueueImpl<Integer, StopBuyOrder>(price, 
                                                             sBuyOrderDispatchFilter, 
-                                                            sBuyOrderComparator),"stopBuyOrderThread");
+                                                            sBuyOrderComparator);
         
-    }
-    
-    //TODO working...
-    public void initiateDispatchThread(Runnable r) {
-        //call run(), which will dispatchOrders();
-        new Thread(r).start();
+        //TODO- Not exactly correct- we want threads to not be running/be idle when not doing work,
+        //ie not dispatching orders;
+        //need to figure out how to implement without calling wait() when no orders to dispatch
+        //and notify() when a priceChange/dispatchOrder event occurs
+        //Okay to have each Order Queue have a thread of its own
+        //Consider using an Executor??
+        Thread ssThread = new Thread(stopSellOrderQueue);
+        Thread sbThread = new Thread(stopBuyOrderQueue);
+        ssThread.start();
+        sbThread.start();
     }
     
     /**Adjusts the price of this order manager in response to a change in the stock's price,

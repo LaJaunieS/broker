@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: edu.uw.spl.OrderManagerImplTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.025 sec - in edu.uw.spl.OrderManagerImplTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 sec - in edu.uw.spl.OrderManagerImplTest
