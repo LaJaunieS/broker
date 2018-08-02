@@ -67,21 +67,13 @@ public class OrderManagerImpl implements OrderManager {
      */
     private OrderQueueImpl<Integer,StopBuyOrder> stopBuyOrderQueue;
     
-    
-    /**Constructor
-     * @param symbol the stock symbol to be associated with this order manager
-     */
-    public OrderManagerImpl(String symbol) {
-        this.symbol = symbol;
-    }
-    
     /**Constructor. Instantiates separate a Stop Sell OrderQueue and a Stop Buy OrderQueue
      * in separate threads
      * @param symbol the stock symbol to be associated with this order manager
      * @param price the current price of the stock at the time of instantiation
      */
     public OrderManagerImpl(String symbol, int price) {
-        this(symbol);
+        this.symbol = symbol;
         stopSellOrderQueue = new OrderQueueImpl<Integer, StopSellOrder>(price, 
                 sSellOrderDispatchFilter, 
                 sSellOrderComparator);
@@ -95,10 +87,7 @@ public class OrderManagerImpl implements OrderManager {
         //and notify() when a priceChange/dispatchOrder event occurs
         //Okay to have each Order Queue have a thread of its own
         //Consider using an Executor??
-        Thread ssThread = new Thread(stopSellOrderQueue);
-        Thread sbThread = new Thread(stopBuyOrderQueue);
-        ssThread.start();
-        sbThread.start();
+        
     }
     
     /**Adjusts the price of this order manager in response to a change in the stock's price,
