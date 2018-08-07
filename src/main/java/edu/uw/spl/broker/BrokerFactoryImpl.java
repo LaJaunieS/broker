@@ -24,7 +24,9 @@ public class BrokerFactoryImpl implements BrokerFactory {
      * @return the newly instantiated broker
      */
     @Override
-    public Broker newBroker(String name, AccountManager acctMgr, StockExchange exch) {
+    public Broker newBroker(final String name, 
+                            final AccountManager acctMgr, 
+                            final StockExchange exch) {
         BrokerImpl broker = new BrokerImpl(name,acctMgr,exch);
         /*Either here or in Broker constructor, get list of alll the stocks in the exchange
          * and create an order manager for each

@@ -71,7 +71,9 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @param acctMgr the AccountManager instance that will be associated with this broker
      * @param exchange The exchange this broker will interact with
      * */
-    public BrokerImpl(String name, AccountManager acctMgr, StockExchange exchange) {
+    public BrokerImpl(final String name, 
+                        final AccountManager acctMgr, 
+                        final StockExchange exchange) {
         /*Set the internal fields...*/
         this.name = name;
         this.accountManager = acctMgr;
@@ -144,7 +146,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if there was a problem creating the account
      */
     @Override
-    public Account createAccount(String username, String password, int balance) 
+    public Account createAccount(final String username, final String password, final int balance) 
             throws BrokerException {
        Account account = null; 
        try {
@@ -168,7 +170,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if the operation failed
      */
     @Override
-    public void deleteAccount(String username) throws BrokerException {
+    public void deleteAccount(final String username) throws BrokerException {
         try {
             accountManager.deleteAccount(username);
         } catch (AccountException e) {
@@ -187,7 +189,8 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if the operation failed
      */
     @Override
-    public Account getAccount(String username, String password) throws BrokerException {
+    public Account getAccount(final String username, final String password) 
+                            throws BrokerException {
         boolean validated = false;
         Account account = null;
         /*First locate and validate the account...*/
@@ -215,7 +218,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
     /**Utility function that processes a market order
      * @param order an order to be processed
      */
-    private void executeOrder(Order order) {
+    private void executeOrder(final Order order) {
         try {
             accountManager.getAccount(order.getAccountId())
                             .reflectOrder(order,exchange.executeTrade(order));
@@ -230,7 +233,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if the operation failed
      */
     @Override
-    public void placeOrder(MarketBuyOrder order) throws BrokerException {
+    public void placeOrder(final MarketBuyOrder order) throws BrokerException {
         this.marketOrders.enqueue(order);
     }
 
@@ -240,7 +243,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if the operation failed
      */
     @Override
-    public void placeOrder(MarketSellOrder order) throws BrokerException {
+    public void placeOrder(final MarketSellOrder order) throws BrokerException {
         this.marketOrders.enqueue(order);
     }
 
@@ -251,7 +254,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * with the given order, or the operation fails
      */
     @Override
-    public void placeOrder(StopBuyOrder order) throws BrokerException {
+    public void placeOrder(final StopBuyOrder order) throws BrokerException {
         OrderManager om = this.orderManagers.get(order.getStockTicker());
         if (om == null) {
             throw new BrokerException("Unable to locate stock symbol for this order");
@@ -269,7 +272,7 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * with the given order, or the operation fails
      */
     @Override
-    public void placeOrder(StopSellOrder order) throws BrokerException {
+    public void placeOrder(final StopSellOrder order) throws BrokerException {
         OrderManager om = this.orderManagers.get(order.getStockTicker());
         if (om == null) {
             throw new BrokerException("Unable to locate stock symbol for this order");
@@ -286,7 +289,8 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @throws BrokerException if unable to locate the requested stock in the exchange
      */
     @Override
-    public StockQuote requestQuote(String ticker) throws BrokerException {
+    public StockQuote requestQuote(final String ticker) 
+            throws BrokerException {
         /*Get a quote using the given stock symbol
          * and use returned information to instantiate a 
          * new StockQuote (ticker and price)

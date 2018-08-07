@@ -207,7 +207,7 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
      * @see edu.uw.ext.framework.broker.OrderQueue#setOrderProcessor(java.util.function.Consumer)
      */
     @Override
-    public void setOrderProcessor(Consumer<E> proc) {
+    public void setOrderProcessor(final Consumer<E> proc) {
         this.orderProcessor = proc;
     }
     

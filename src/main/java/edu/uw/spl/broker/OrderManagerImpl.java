@@ -72,7 +72,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param symbol the stock symbol to be associated with this order manager
      * @param price the current price of the stock at the time of instantiation
      */
-    public OrderManagerImpl(String symbol, int price) {
+    public OrderManagerImpl(final String symbol, final int price) {
         this.symbol = symbol;
         stopSellOrderQueue = new OrderQueueImpl<Integer, StopSellOrder>(price, 
                 sSellOrderDispatchFilter, 
@@ -80,14 +80,6 @@ public class OrderManagerImpl implements OrderManager {
         stopBuyOrderQueue = new OrderQueueImpl<Integer, StopBuyOrder>(price, 
                                                             sBuyOrderDispatchFilter, 
                                                             sBuyOrderComparator);
-        
-        //TODO- Not exactly correct- we want threads to not be running/be idle when not doing work,
-        //ie not dispatching orders;
-        //need to figure out how to implement without calling wait() when no orders to dispatch
-        //and notify() when a priceChange/dispatchOrder event occurs
-        //Okay to have each Order Queue have a thread of its own
-        //Consider using an Executor??
-        
     }
     
     /**Adjusts the price of this order manager in response to a change in the stock's price,
@@ -96,7 +88,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param price the new price of the stock/threshold of the Stop order queues
      */
     @Override
-    public void adjustPrice(int price) {
+    public void adjustPrice(final int price) {
         this.stopBuyOrderQueue.setThreshold(price);
         this.stopSellOrderQueue.setThreshold(price);
     }
@@ -106,7 +98,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param order a StopBuyOrder to be added to the order queue
      */
     @Override
-    public void queueOrder(StopBuyOrder order) {
+    public void queueOrder(final StopBuyOrder order) {
         this.stopBuyOrderQueue.enqueue(order);
     }
 
@@ -115,7 +107,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param order a StopSellOrder to be added to the order queue
      */
     @Override
-    public void queueOrder(StopSellOrder order) {
+    public void queueOrder(final StopSellOrder order) {
         this.stopSellOrderQueue.enqueue(order);
     }
 
@@ -133,7 +125,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param processor the StopBuyOrder processor
      */
     @Override
-    public void setBuyOrderProcessor(Consumer<StopBuyOrder> processor) {
+    public void setBuyOrderProcessor(final Consumer<StopBuyOrder> processor) {
         this.stopBuyOrderQueue.setOrderProcessor(processor);
         
     }
@@ -144,7 +136,7 @@ public class OrderManagerImpl implements OrderManager {
      * @param processor the StopSellOrder processor
      */
     @Override
-    public void setSellOrderProcessor(Consumer<StopSellOrder> processor) {
+    public void setSellOrderProcessor(final Consumer<StopSellOrder> processor) {
         this.stopSellOrderQueue.setOrderProcessor(processor);
     }
 

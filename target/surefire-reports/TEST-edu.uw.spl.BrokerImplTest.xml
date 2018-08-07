@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="edu.uw.spl.BrokerImplTest" time="1.291" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="edu.uw.spl.BrokerImplTest" time="1.26" tests="2" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_161\jre\bin"/>
@@ -64,6 +64,6 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase name="testRequestQuote" classname="edu.uw.spl.BrokerImplTest" time="0.251"/>
-  <testcase name="testBrokerConstruction" classname="edu.uw.spl.BrokerImplTest" time="0.211"/>
+  <testcase name="testRequestQuote" classname="edu.uw.spl.BrokerImplTest" time="0.286"/>
+  <testcase name="testBrokerConstruction" classname="edu.uw.spl.BrokerImplTest" time="0.137"/>
 </testsuite>
