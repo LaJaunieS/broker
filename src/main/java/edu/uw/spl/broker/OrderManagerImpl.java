@@ -80,6 +80,8 @@ public class OrderManagerImpl implements OrderManager {
         stopBuyOrderQueue = new OrderQueueImpl<Integer, StopBuyOrder>(price, 
                                                             sBuyOrderDispatchFilter, 
                                                             sBuyOrderComparator);
+        new Thread(stopSellOrderQueue).start();
+        new Thread(stopBuyOrderQueue).start();
     }
     
     /**Adjusts the price of this order manager in response to a change in the stock's price,
