@@ -3,11 +3,15 @@ edu\uw\spl\account\AddressImpl.class
 edu\uw\spl\broker\BrokerImpl.class
 edu\uw\spl\broker\BrokerFactoryImpl.class
 edu\uw\spl\broker\OrderQueueImpl.class
+edu\uw\spl\exchange\NetworkExchangeProxyImpl.class
 edu\uw\spl\LoggerTest.class
 edu\uw\spl\account\CreditCardImpl.class
 edu\uw\spl\broker\OrderManagerImpl.class
 edu\uw\spl\dao\JSONAccountDAO.class
+edu\uw\spl\exchange\NetworkExchangeProxyFactoryImpl.class
+edu\uw\spl\exchange\ExchangeNetworkAdapterImpl.class
 edu\uw\spl\dao\AccountDAOs.class
+edu\uw\spl\exchange\NetworkExchangeAdapterFactoryImpl.class
 edu\uw\spl\account\AccountFactoryImpl.class
 edu\uw\spl\dao\FileAccountDAO.class
 edu\uw\spl\account\AccountManagerImpl.class

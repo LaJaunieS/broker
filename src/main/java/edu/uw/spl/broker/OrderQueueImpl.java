@@ -35,7 +35,10 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
      * if a Market Order queue, it will be a boolean (market open/closed?)*/
     private T threshold; 
     
+    /**Lock controlling access to the queue*/
     private Lock lock = new ReentrantLock();
+    
+    /**Lock condition used for initiating processing orders*/
     private Condition condition = lock.newCondition();
     
     /**
@@ -70,6 +73,7 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
      * from the queue
      * @param cmp the Comparator controlling the ordering of orders added to this queue
      * */
+    
     public OrderQueueImpl( T threshold, BiPredicate<T,E> dispatchFilter, Comparator<E> cmp) {
         /*Initialize the treeSet with the comparator argument*/
         this.orderQueue = new TreeSet<E>(cmp);
@@ -85,11 +89,16 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     @Override
     public void enqueue(final E order) {
         /*Dispatch any dispatchable orders after adding the new order to the queue*/
-        orderQueue.add(order);
-        dispatchOrders();
-        
+        try {
+            lock.lock();
+            orderQueue.add(order);
+            dispatchOrders();
+        } finally {
+            lock.unlock();
+        }
     }
 
+    
     /**Removes the highest dispatchable order in the queue. If there are orders in the 
      * queue but they do not meet the dispatch threshold order will not be removed and 
      * null will be returned.
@@ -102,6 +111,8 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
         /*If the first order in the list meets the dispatch threshold
          * remove the first order from the list 
          * Return the order or null, if no more orders in the list*/
+        
+        //TODO- add lock/unlock logic from enqueue
         E order = null;
         if (orderQueue.isEmpty()) {
             log.info("queue is empty, nothing to deqeue");
@@ -110,7 +121,8 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
             /*If order isn't null (ie list wasn't empty) test with dispatch filter...*/
             if (this.dispatchFilter.test(this.threshold, order)){
                 log.info("{} removed from queue",order.toString());
-                orderQueue.remove(order);
+                if (this.dispatchFilter !=null) 
+                    orderQueue.remove(order);
             } else {
                 /*...Otherwise don't remove the order from the list, don't dispatch 
                  * and return null*/
@@ -119,30 +131,36 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
             };
         }
         return order;
+        
     }
 
     
     @Override
     public void run() {
+        E order; 
+        
         while (true ) {
-            /*acquire the lock...*/
-            lock.lock();
+            
             try {
-                while (this.orderQueue.isEmpty()) {
-                    /*...wait the current thread if nothing to dispatch/enqueue...*/
+                /*acquire the lock...*/
+                lock.lock();
+                /*Thread will wait/release the lock until items are in the queue, at which point
+                 * dispatchOrders() will signal the waiting thread    
+                 */
+                while ((order = this.dequeue()) ==null) {
                     condition.await();
+                    log.info("Thread waiting for signal...");
                 }
-                /*...otherwise dispatch the orders*/
-                this.dispatchOrders();
+                dispatchOrders();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                /*Open the lock once done*/
+                /*Release the lock once done*/
                 lock.unlock();
             }
         } 
-        
     }
+    
     /** Executes the callback for each dispatchable order. Each dispatchable order is in turn 
      * removed from the queue and passed to the callback. If no callback is registered (ie, null)
      * the order is simply removed from the queue.
@@ -152,34 +170,27 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
     @Override
     public void dispatchOrders() {
         /*capture the first dispatchable order in the queue, if any, derived
-         * from invoking the dispatch filter*/
-        
-        //TODO Assignment4-  dispatching performed on a separate thread, initiates the 
-        /*dispatching on a separate (not the calling) thread
-         * So this means you'll have the main thread, and then a single
-         * dispatching thread where the dispatching occurs?
-         * Whenever, an order is added to the queue or the stock price changes the 
-         * dispatching thread should automatically begin dispatching any dispatchable items. 
-         * The OrderQueue implementation should either extend Thread, implement Runnable 
-         * or have a helper class that does. This is where the dispatching should be performed. 
-         * Each invocation of dispatchOrders should NOT create a new thread. 
-         * Alternatively, you may take advantage of the Executor framework. 
-         * This must all be accomplished without using synchronized, wait, or notify.*/
-        
+         * from invoking the dispatch filter
+         *  Send dispatchable orders to the market order queue*/
+        /*  If dequeue tests return a null order, nothing to dispatch and do nothing*/
+        /*...also dequeue the next order for processing, or return if order is null*/
         E order;
-        
-        /*Send dispatchable orders to the market order queue*/
-        /*If dequeue tests return a null order, nothing to dispatch and do nothing*/
-        /*...also dequeue the next order for processing, or exit if order is null*/
-        while ((order = this.dequeue()) !=null) {
-            /*send dispatchable orders to the market order queue- if no orderProcessor
-            is set, will just deqeue the order*/
-            if (this.orderProcessor!=null) {
-                this.orderProcessor.accept(order);
-                log.info("dispatched order {}",order.toString());
-            } else {
-                log.info("Order processor is null, nothing dispatched");
+        try {
+            lock.lock();
+            while ((order = this.dequeue()) !=null) {
+                /*send dispatchable orders to the market order queue- if no orderProcessor
+                is set, will just dequeue the order*/
+                if (this.orderProcessor!=null) {
+                    this.orderProcessor.accept(order);
+                    log.info("dispatched order {}",order.toString());
+                } else {
+                    log.info("Order processor is null, nothing dispatched");
+                }
             }
+            /*Signal another thread to wake up*/
+            condition.signal();
+        } finally {
+            lock.unlock();
         }
     }
 

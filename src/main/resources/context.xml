@@ -25,6 +25,12 @@
 
   <!-- Bean providing RDBMS implementation of edu.uw.ext.framework.broker.BrokerFactory -->
   <bean id="BrokerFactory" class="edu.uw.spl.broker.BrokerFactoryImpl"/>
+
+  <!-- Bean implementing ...framework.exchange.NetworkExchangeAdapterFactory -->
+  <bean id="NetworkExchangeAdapterFactory" class="edu.uw.spl.exchange.NetworkExchangeAdapterFactoryImpl"/>
+
+  <!-- Bean implementing ...framework.exchange.NetworkExchangeProxyFactory -->
+  <bean id="NetworkExchangeProxyFactory" class="edu.uw.spl.exchange.NetworkExchangeProxyFactoryImpl"/>
   
   
 </beans>
