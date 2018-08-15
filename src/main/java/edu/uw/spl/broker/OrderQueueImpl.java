@@ -114,22 +114,28 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
         
         //TODO- add lock/unlock logic from enqueue
         E order = null;
-        if (orderQueue.isEmpty()) {
-            log.info("queue is empty, nothing to deqeue");
-        } else {
-            order = orderQueue.first();
-            /*If order isn't null (ie list wasn't empty) test with dispatch filter...*/
-            if (this.dispatchFilter.test(this.threshold, order)){
-                log.info("{} removed from queue",order.toString());
-                if (this.dispatchFilter !=null) 
-                    orderQueue.remove(order);
+        lock.lock();
+        try {
+            if (orderQueue.isEmpty()) {
+                log.info("queue is empty, nothing to deqeue");
             } else {
-                /*...Otherwise don't remove the order from the list, don't dispatch 
-                 * and return null*/
-                log.info("{} not dequeued at this time",order.toString());
-                order = null;
-            };
+                order = orderQueue.first();
+                /*If order isn't null (ie list wasn't empty) test with dispatch filter...*/
+                if (this.dispatchFilter.test(this.threshold, order)){
+                    log.info("{} removed from queue",order.toString());
+                    if (this.dispatchFilter !=null) 
+                        orderQueue.remove(order);
+                } else {
+                    /*...Otherwise don't remove the order from the list, don't dispatch 
+                     * and return null*/
+                    log.info("{} not dequeued at this time",order.toString());
+                    order = null;
+                };
+            }
+        } finally {
+            lock.unlock();
         }
+        
         return order;
         
     }
@@ -175,8 +181,9 @@ public class OrderQueueImpl<T, E extends edu.uw.ext.framework.order.Order>
         /*  If dequeue tests return a null order, nothing to dispatch and do nothing*/
         /*...also dequeue the next order for processing, or return if order is null*/
         E order;
+        lock.lock();
+        
         try {
-            lock.lock();
             while ((order = this.dequeue()) !=null) {
                 /*send dispatchable orders to the market order queue- if no orderProcessor
                 is set, will just dequeue the order*/
