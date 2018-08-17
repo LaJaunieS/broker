@@ -1,5 +1,6 @@
 package edu.uw.spl.broker;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -219,9 +220,16 @@ public class BrokerImpl implements Broker, ExchangeListener {
      * @param order an order to be processed
      */
     private void executeOrder(final Order order) {
+        String acctId = order.getAccountId();
+        int numShares = order.getNumberOfShares();
+        String ticker = order.getStockTicker();
         try {
-            accountManager.getAccount(order.getAccountId())
+            accountManager.getAccount(acctId)
                             .reflectOrder(order,exchange.executeTrade(order));
+            log.info("Broker successfully executed order for {}: {} shares of {}",
+                                                                    acctId,
+                                                                    numShares,
+                                                                    ticker);
         } catch (AccountException e) {
             e.printStackTrace();
         }
@@ -324,7 +332,6 @@ public class BrokerImpl implements Broker, ExchangeListener {
     @Override
     public void exchangeOpened(ExchangeEvent evt) {
       //emit event to lsteners that exchange is open
-        //ExchangeEvent.newOpenedEvent(this.exchange);
         this.marketOrders.setThreshold(Boolean.TRUE);
         log.info("*****Exchange is open******");
     }
@@ -337,7 +344,6 @@ public class BrokerImpl implements Broker, ExchangeListener {
     @Override
     public void priceChanged(ExchangeEvent evt) {
         //emit event to listeners that price of the order manager's stock has changed
-        //TODO Check for null returns
         OrderManager om = this.orderManagers.get(evt.getTicker());
         om.adjustPrice(evt.getPrice());
     }

@@ -11,7 +11,7 @@ public class NetworkExchangeProxyFactoryImpl
                                     int eventPort, 
                                     String cmdIpAddress, 
                                     int commandPort) {
-        return new NetworkExchangeProxyImpl(eventIpAddress,eventPort,cmdIpAddress,commandPort);
+        return new NetworkExchangeProxy(eventIpAddress,eventPort,cmdIpAddress,commandPort);
     }
 
 }
