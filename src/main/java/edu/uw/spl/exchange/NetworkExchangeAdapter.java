@@ -92,6 +92,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
             new Thread(new CommandListener(commandPort, exchange)).start();
             
         } catch (IOException ex) {
+            log.warn("There was an error initiating the event listener socket");
             ex.printStackTrace();
         }
         
@@ -150,18 +151,19 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     private synchronized void multicastEvent(final String msg) {
         byte[] buffer;
         try {
-            buffer = msg.getBytes(ProtocolConstants.ENCODING.toString());
+            buffer = msg.getBytes(ProtocolConstants.ENCODING);
             datagramPacket.setData(buffer);
             datagramPacket.setLength(buffer.length);
             
         } catch (UnsupportedEncodingException e1) {
-            // TODO Auto-generated catch block
+            log.warn("Unable to encode event message bytes using {}",ProtocolConstants.ENCODING);
             e1.printStackTrace();
         }
         try {
             this.eventSocket.send(datagramPacket);
             log.info("Sent event for: {}",msg);
         } catch (IOException e) {
+            log.warn("There was an error multicasting event message: {}",msg);
             e.printStackTrace();
         }
     }
@@ -272,11 +274,15 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     }
                     
                 } catch (IOException e) {
+                    log.warn("There was an error obtaining the socket's input/output stream");
                     e.printStackTrace();
                 } finally {
                     try {
-                        this.socket.close();
+                        if (!this.socket.isClosed()) {
+                            this.socket.close();
+                        }
                     } catch (IOException e) {
+                        log.warn("Unable to close socket");
                         e.printStackTrace();
                     }
                 }
@@ -381,7 +387,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     serverSocket = new ServerSocket(commandPort);
                     log.info("Command socket opened at port {}",commandPort);
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    log.warn("Unable to open command socket at port {}",commandPort);
                     e.printStackTrace();
                 }
                 
@@ -408,15 +414,16 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     }
                 } catch (IOException ex) {
                     if (serverSocket!= null && serverSocket.isClosed()) {
-                        log.warn("There was an error accepting the command connection", ex);
+                        log.warn("There was an error accepting the command connection. "
+                                + "The socket is closed.");
                     }
+                    ex.printStackTrace();
                 }
                 finally {
                     listening = false;
                     if (serverSocket != null && serverSocket.isClosed()) {
                             this.close();
                             serverSocket = null;
-                        
                     }
                     //if providing an excecutor initiate shutdown()
                     this.close();
@@ -438,7 +445,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                         client = null;
                         serverSocket = null;
                     }
-
                 }
             }
         }

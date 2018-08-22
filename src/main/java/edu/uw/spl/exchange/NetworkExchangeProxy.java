@@ -264,7 +264,7 @@ public class NetworkExchangeProxy implements StockExchange {
             log.info("Transmitted, response: {}",response);
             
         } catch (IOException e) {
-            log.warn("Error transmitting command");
+            log.warn("Error transmitting command: {}",command);
             e.printStackTrace();
         } 
         return response;
@@ -302,7 +302,7 @@ public class NetworkExchangeProxy implements StockExchange {
             try {
                 group = InetAddress.getByName(this.eventIpAddress);
             } catch (UnknownHostException e) {
-                // TODO Auto-generated catch block
+                log.warn("Unable to locate IP address for host, event multicast group not initialized");
                 e.printStackTrace();
             }
             log.info("Network Event Processor constructed at address {}, port {}",
@@ -321,11 +321,13 @@ public class NetworkExchangeProxy implements StockExchange {
             
             
             try {
-                this.eventSocket = new MulticastSocket(eventPort);
+                this.eventSocket = new MulticastSocket(this.eventPort);
                 log.info("Event socket {} initialized at port {}",eventSocket, eventPort);
                 eventSocket.joinGroup(this.group);
                 log.info("Socket joined event multicast group at address {}",this.group.getHostAddress());
             } catch (IOException e2) {
+                log.warn("Unable to initialize event multicast socket, or join the multicast group"
+                        + "at port {}",eventPort);
                 e2.printStackTrace();
             } 
             //handle the events and fire listeners in response to text commands
@@ -351,6 +353,7 @@ public class NetworkExchangeProxy implements StockExchange {
                                                     ProtocolConstants.ENCODING);
                     
                 } catch (UnsupportedEncodingException e) {
+                    log.warn("Unable to encode event message bytes using {}",ProtocolConstants.ENCODING);
                     e.printStackTrace();
                 } 
                 //need to handle potential null pointer exceptions
