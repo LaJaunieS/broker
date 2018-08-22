@@ -253,16 +253,14 @@ public class NetworkExchangeProxy implements StockExchange {
                     ProtocolConstants.ENCODING);
             final BufferedReader br = new BufferedReader(reader);
 
-
-            /*Write the command to the output stream*/
+            /*Write the command to the output stream (autoflush enabled)*/
             log.info("Transmitting command: {}",command);
             writer.println(command);
-            writer.flush();
+            
             /*Read the response back from the input stream*/
             response = br.readLine();
             
             log.info("Transmitted, response: {}",response);
-            
         } catch (IOException e) {
             log.warn("Error transmitting command: {}",command);
             e.printStackTrace();
