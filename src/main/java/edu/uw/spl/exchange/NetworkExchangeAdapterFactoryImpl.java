@@ -20,7 +20,6 @@ public class NetworkExchangeAdapterFactoryImpl implements
             exchangeAdapter = 
                     new NetworkExchangeAdapter(exchange,multicastIP,multicastPort,commandPort);
         } catch (UnknownHostException | SocketException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return exchangeAdapter;

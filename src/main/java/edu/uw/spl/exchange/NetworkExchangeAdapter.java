@@ -51,7 +51,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     /**the packet(s) by which events will be multicast to listeners*/
     private DatagramPacket datagramPacket;
     
-    
     /**The multicast group*/
     private InetAddress group;
     
@@ -99,19 +98,31 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
         this.exchange.addExchangeListener(this);
     }
     
+    /**The exchange has closed- notify clients and remove price change listener
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#exchangeClosed(edu.uw.ext.framework.exchange.ExchangeEvent)
+     */
     @Override
     public void exchangeClosed(ExchangeEvent event) {
         log.info("****Market closed****");
         this.multicastEvent(ProtocolConstants.CLOSED_EVENT.toString());
+        this.exchange.removeExchangeListener(this);
     }
 
+    /** The exchange has opened- add listeners to receive price change events and multicast them
+     * to brokers
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#exchangeOpened(edu.uw.ext.framework.exchange.ExchangeEvent)
+     */
     @Override
     public void exchangeOpened(ExchangeEvent event) {
         log.info("****Market open****");
         this.multicastEvent(ProtocolConstants.OPEN_EVENT.toString());
+        this.exchange.addExchangeListener(this);
         
     }
 
+    /** A price change for a ticker has occurred. Multicast the event to brokers
+     * @see edu.uw.ext.framework.exchange.ExchangeListener#priceChanged(edu.uw.ext.framework.exchange.ExchangeEvent)
+     */
     @Override
     public void priceChanged(ExchangeEvent event) {
         final CharSequence symbol = event.getTicker();
@@ -125,15 +136,17 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
         
     }
 
+    /**Closes the adapter
+     * @see java.lang.AutoCloseable#close()
+     */
     @Override
-    public void close() throws Exception {
+    public void close() {
         // TODO Auto-generated method stub
         
     }
     
-    //TODO consider a private method that handles sending the text-based events
-    //via the multicast
-    /*Creates a new packet using data from the event and sends to the multicast socket*/
+    /**Creates a new packet using data from the event and sends to the multicast socket
+     * @param msg the message/command to be multicasted to listeners*/
     private synchronized void multicastEvent(final String msg) {
         byte[] buffer;
         try {
@@ -151,28 +164,36 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-                
-        
     }
     
      
 
+    /**Receives and executes commands from a client
+     * @author slajaunie
+     *
+     */
     class CommandHandler implements Runnable {
         private final Logger log = LoggerFactory.getLogger(CommandHandler.class);
         
+        /**The exchange the client will be interacting with*/
         private final StockExchange exchange;
         
         /**Socket for the client connection*/
         private Socket socket;
         
-        
+        /**Constructor- Assigns an exchange and a socket for receiving/transmitting commands
+         * @param exchange the exchange the client will be interacting with
+         * @param socket the socket for the client connection
+         */
         public CommandHandler(final StockExchange exchange, final Socket socket) {
             this.exchange = exchange;
             this.socket = socket;
         }
         
-        
-        
+        /**Receives and executes the command received from the client via an input stream,
+         *  and writes a response to the output stream 
+         * @see java.lang.Runnable#run()
+         */
         @Override
         public void run() {
             // TODO Auto-generated method stub
@@ -256,19 +277,26 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     try {
                         this.socket.close();
                     } catch (IOException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
                 
             }
             //close the sockets
+            
+            /**Prepares a response to a get state command consistent with the text-based protocol
+             * @return a String- the open state response if the exchange is open, the closed state
+             * response if the exchange is closed
+             */
             private String doGetState() {
                 final String response = exchange.isOpen() ? ProtocolConstants.OPEN_STATE.toString():
                                                             ProtocolConstants.CLOSED_STATE.toString();
                 return response;
             }
             
+            /**Prepares a response to a get tickers command consistent with the text-based protocol
+             * @return a String consisting of the get tickers response
+             */
             private String doGetTickers() {
                 final String[] tickers = exchange.getTickers();
                 final String response = String.join(ProtocolConstants.ELEMENT_DELIMITER,
@@ -276,6 +304,11 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 return response;
             }
             
+            /**Prepares a response to a get quote command consistent with the text-based protocol
+             * @param ticker the ticker for which a quote will be returned
+             * @return a String consisting of the get quote response, or a response indicating that
+             * the stock was not found
+             */
             private String doGetQuote(final String ticker) {
                 final StockQuote quote = exchange.getQuote(ticker);
                 int price = (quote == null)? Integer.parseInt(ProtocolConstants.INVALID_STOCK):
@@ -285,6 +318,13 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 return response;
             }
             
+            /**Executes the trade in response to an execute trade command consistent with 
+             * the text-based protocol
+             * @param elements an array consisting of the individual components of the 
+             * execute trade command (command, order type, price) as parsed by the handler
+             * @return a String consisting of the exchange's execute trade response, the price 
+             * at which the trade was executed
+             */
             private String doExecuteTrade(final String[] elements) {
                 /*parse the individual components of the command*/
                 /*command format: EXECUTE_TRADE_CMD:BUY_ORDER|SELL_ORDER:accountid:symbol:shares*/
@@ -315,18 +355,18 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     
                 }
                 return response;
-                //account for invalid price
-                
             }
-    
-            
         }
     
 
-        /*The thread that will listen for commands via the server socket*/
-    //TODO try to make this private again
-        class CommandListener implements Runnable {
+        /**Listens for and accepts connections from a client; passes connections to the 
+         * CommandHandler for the reading and processing of commands
+         * @author slajaunie
+         *
+         */
+        private class CommandListener implements Runnable {
             private final Logger log = LoggerFactory.getLogger(CommandListener.class);
+            
             private ServerSocket serverSocket;
             private StockExchange exchange;
             private int commandPort;
@@ -347,6 +387,10 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 
             }
             
+            /**Listens for and accepts connections from a client; then runs a CommandHandler
+             * in a separate thread to process commands received from the client
+             * @see java.lang.Runnable#run()
+             */
             @Override
             public void run() {
                 listening = true;
@@ -370,13 +414,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 finally {
                     listening = false;
                     if (serverSocket != null && serverSocket.isClosed()) {
-                        try {
-                            serverSocket.close();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                        serverSocket = null;
+                            this.close();
+                            serverSocket = null;
                         
                     }
                     //if providing an excecutor initiate shutdown()
@@ -384,6 +423,9 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 }
             }
             
+            /**
+             *Closes the socket
+             */
             public void close() {
                 if (serverSocket != null || client != null) {
                     try {
@@ -398,6 +440,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     }
 
                 }
-                            }
+            }
         }
 }

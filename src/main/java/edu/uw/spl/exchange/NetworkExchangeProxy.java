@@ -33,31 +33,40 @@ import edu.uw.ext.framework.order.Order;
 import edu.uw.spl.broker.BrokerImpl;
 import edu.uw.spl.exchange.ProtocolConstants;
 
-
+/**Operates as a client for interacting with an exchange via a network. The methods encode
+ * the method request as a text-based procotol, per ProtocolConstants, and send the command to the 
+ * NetworkExchangeAdapter implementation; the methods then receive the response, decode it, 
+ * and return a result
+ * The information exchanged will either be Commands based on the text-based protocol,
+ * (to get a quote or execute a trade, etc), or change Events (price change, market open/closed).
+ * The NetowrkExchangeAdapter implementation will send multicast messages representing exchange events
+ *  via a separate thread. Event messages will be transformed into the appropriate event object 
+ *  and then propagated to registered listeners*/
 public class NetworkExchangeProxy implements StockExchange {
-/*
- * The operations of the StockExchange interface, except the listener registration operations, 
- * will be implemented to make requests of the exchange network adapter using the text based 
- * custom protocol
-    Receive multicast messages representing exchange events, this must be done on a separate thread
-    Event messages will be transformed into the appropriate event object and then propagated 
-    to registered listeners
- */
-    
     
     public static final Logger log = LoggerFactory.getLogger(NetworkExchangeProxy.class);
     
+    /**The TCP IP address used to send commands*/
     private String commandIpAddress;
-    
+
+    /**The port where the exchange accepts command requests*/
     private int commandPort;
     
+    /**The network event processor*/
     private NetworkEventProcessor eventProcessor;
     
+    /**The event listener list that holds listeners for exchange events*/
     private EventListenerList listenerList = new EventListenerList();
     
+    /**The socket where commands will be transmitted*/
     private Socket commandSocket;
     
-    /**Constructor*/
+    /**Constructor
+     * @param eventIpAddress the multicast IP address to connect to
+     * @param eventPort the multicast port to connect to
+     * @param cmdIpAddress the address where the exchange accepts commands
+     * @param cmdPort the port where the exchange accepts commands
+     */
     public NetworkExchangeProxy(final String eventIpAddress, 
                                     final int eventPort, 
                                     final String cmdIpAddress,
@@ -82,18 +91,29 @@ public class NetworkExchangeProxy implements StockExchange {
         
     }
     
+    /**Add an exchange listener for exchange events
+     * @see edu.uw.ext.framework.exchange.StockExchange#addExchangeListener(edu.uw.ext.framework.exchange.ExchangeListener)
+     * @param l the listener to be added
+     */
     @Override
     public void addExchangeListener(ExchangeListener l) {
         listenerList.add(ExchangeListener.class, l);
         
     }
     
+    /**Add an exchange listener for exchange events
+     * @see edu.uw.ext.framework.exchange.StockExchange#removeExchangeListener(edu.uw.ext.framework.exchange.ExchangeListener)
+     * @param l the listener to be added
+     */
     @Override
     public void removeExchangeListener(ExchangeListener l) {
         listenerList.remove(ExchangeListener.class, l);
         
     }
     
+    /**Propagate events to the listeners based on the type of event received from the exchange
+     * @param event the event received from the exchange
+     */
     private void fireExchangeEvent(final ExchangeEvent event) {
         ExchangeListener[] listeners = this.listenerList.getListeners(ExchangeListener.class);
         if (listeners.length != 0) {
@@ -124,6 +144,11 @@ public class NetworkExchangeProxy implements StockExchange {
     }
 
     
+    /**Instructs the brokers/exchange to execute a trade
+     * @see edu.uw.ext.framework.exchange.StockExchange#executeTrade(edu.uw.ext.framework.order.Order)
+     * @param order the order to be executed
+     * @return an int reflecting the price at which the trade occurred
+     */
     @Override
     public int executeTrade(Order order) {
         //Tell the broker to execute a trade
@@ -148,7 +173,12 @@ public class NetworkExchangeProxy implements StockExchange {
         return Integer.parseInt(response);
     }
 
-    //Returns a stock quote, or null if the ticker is not found
+    /**Sends a GET_QUOTE_CMD:ticker to the exchange, and returns a stock quote, 
+     * or null if the ticker is not found
+     * @see edu.uw.ext.framework.exchange.StockExchange#getQuote(java.lang.String)
+     * @param ticker the stock symbol for which a quote is obtained
+     * @return a StockQuote that reflects the current price of the given ticker
+     */
     @Override
     public StockQuote getQuote(final String ticker) {
         /*Command format: GET_QUOTE_CMD:symbol*/
@@ -174,6 +204,11 @@ public class NetworkExchangeProxy implements StockExchange {
         return quote;
     }
 
+    /**Sends a GET_TICKERS_CMD to the exchange, and return all tickers contained in the exchange,
+     * or null if there was an error obtaining the information from the exchange
+     * @see edu.uw.ext.framework.exchange.StockExchange#getTickers()
+     * @return a <code>String[]</code> containing all tickers in the exchange
+     */
     @Override
     public String[] getTickers() {
         /*send get tickers command to the server/exchange*/
@@ -183,6 +218,11 @@ public class NetworkExchangeProxy implements StockExchange {
         return tickers;
     }
 
+    /**Sends a GET_STATE_CMD to the exchange, and returns a boolean reflecting the current
+     * state of the exchange (open/closed)
+     * @see edu.uw.ext.framework.exchange.StockExchange#isOpen()
+     * @return a <code>boolean</code>- true if the exchange is open, false if it is closed
+     */
     @Override
     public boolean isOpen() {
         /*Send exchange state query command*/
@@ -195,14 +235,15 @@ public class NetworkExchangeProxy implements StockExchange {
         return state;
     }
 
+    /**Formats a command consistent with the text-based protocol (in ProtocolConstants)
+     * and transmits it to the exchange. Returns a string representing the text-based
+     * protocol response from the server
+     * @param command the command to be transmitted
+     * @return a String representing the text-based response from the server
+     */
     private String transmitCommand(String command) {
         //build a string command and write to the output stream on the exchange socket
         //also capture the response or null
-        
-        //TODO theres a problem with the input stream- server is responding with the
-        //same command as the first call ,causing problems with broker trying to 
-        //populate the ticker list on initialization- coming back as [CLOSED_STATE]
-        //somehow input stream isn't flushing before writing a new response?
         String response = null;
         try {
             final OutputStream os = this.commandSocket.getOutputStream();
@@ -231,23 +272,29 @@ public class NetworkExchangeProxy implements StockExchange {
 
     
     
-    /*Set up to receive and fire in response to events from the exchange. Creates a multicast
-     * socket and joins the multicast group broadcasting events from the exchange
+    /**Joins the multicast group transmitting exchange events, and then processed events received
+     * from the exchange by propagating those events to registered listeners. 
      */
     private class NetworkEventProcessor implements Runnable {
 
-        //buffer size constant
+        /**buffer size constant*/
         private final int BUFFER_SIZE = 1024;
         
+        /**The socket for propagating exchange events*/
         private MulticastSocket eventSocket; 
         
+        /**the multicast IP address for propagating exchange events*/
         private String eventIpAddress;
+        
+        /**the port for propagating exchange events*/
         private int eventPort;
+        
+        /**the Multicast group which will receive exchange events*/
         private InetAddress group;
         
         /**Constructor- creates a multicast socket and joins the given group
-         * @param eventIpAddress
-         * @param eventPort
+         * @param eventIpAddress the multicast IP address for propagating exchange events
+         * @param eventPort the port for propagating exchange events
          */ 
         private NetworkEventProcessor(String eventIpAddress, int eventPort) {
             this.eventIpAddress = eventIpAddress;
@@ -262,17 +309,14 @@ public class NetworkExchangeProxy implements StockExchange {
                                                             eventIpAddress,eventPort);
         }
         
+        /**Accepts and processes market and price change events received from the exchange
+         * @see java.lang.Runnable#run()
+         */
         @Override
         public void run() {
-            //MulticastSocket eventSocket = null;
-            // TODO Auto-generated method stub
             //Build the buffer, the packet and have the multicast
             //socket receive the packet
-            //build a listener list? then loop through the list and 
-            //parse each event received to send the event message
-            //Use scanner to parse? Or String.split may be sufficient?
             
-            /*the components of a command received*/
             log.info("Initializing event listener socket at port {}", this.eventPort);
             
             
