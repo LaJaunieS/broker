@@ -55,11 +55,11 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     
     /**Constructor
      * @param exchange the exchange used ot service the network requests
-     * @param multicastIp the ipAdress used to propagate price changes
-     * @param multicastPort the ip port used to propagate price changes
+     * @param eventIp the ipAdress used to propagate price changes
+     * @param eventPort the ip port used to propagate price changes
      * @param commandPort the ports for listening for commands
-     * @throws UnknownHostException
-     * @throws SocketException
+     * @throws UnknownHostException if the provided eventIp address cannot be resolved
+     * @throws SocketException if there is an error initiating the socket
      */
     public NetworkExchangeAdapter(StockExchange exchange,
                                         String eventIp,
@@ -87,8 +87,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
             if (log.isInfoEnabled()) {
                 log.info("Multicasting events to address {}",group.getHostAddress());
             }
+
             /*Start the listener thread (which will itself initiate the handler)*/
-            /*Consider using executor*/
             /*Will be listening for TCP connections to process commands*/
             new Thread(new CommandListener(commandPort, exchange)).start();
             
@@ -142,7 +142,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     @Override
     public void close() {
         this.exchange.removeExchangeListener(this);
-        //TODO terminate the command listener?
         this.eventSocket.close();
     }
     
@@ -198,7 +197,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
          */
         @Override
         public void run() {
-            // TODO Auto-generated method stub
+            
             String command;
             String response = ProtocolConstants.INVALID_COMMAND;
             String[] tickers = exchange.getTickers();
@@ -283,7 +282,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 }
                 
             }
-            //close the sockets
             
             /**Prepares a response to a get state command consistent with the text-based protocol
              * @return a String- the open state response if the exchange is open, the closed state
@@ -373,7 +371,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
             private int commandPort;
             private Socket client;
             private boolean listening;
-            /*Consider using executor service with cached thread pool*/
             
             private CommandListener(int commandPort, StockExchange exchange) {
                 this.exchange = exchange;
