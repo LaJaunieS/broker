@@ -31,7 +31,9 @@
 
   <!-- Bean implementing ...framework.exchange.NetworkExchangeProxyFactory -->
   <bean id="NetworkExchangeProxyFactory" class="edu.uw.spl.exchange.NetworkExchangeProxyFactoryImpl"/>
-  
+
+  <!--Bean implementing edu.uw.ext.framework.crypto.PrivateMessageCodec -->
+  <bean id="PrivateMessageCodec" class="edu.uw.spl.crypto.PrivateMessageCodecImpl"/>  
   
 </beans>
 

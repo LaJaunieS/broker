@@ -15,6 +15,7 @@ edu\uw\spl\broker\BrokerFactoryImpl.class
 edu\uw\spl\broker\OrderQueueImpl.class
 edu\uw\spl\LoggerTest.class
 edu\uw\spl\exchange\NetworkExchangeAdapter$CommandListener.class
+edu\uw\spl\crypto\PrivateMessageCodecImpl.class
 edu\uw\spl\dao\JSONAccountDAO.class
 app\ExchangeProxyDriver.class
 edu\uw\spl\exchange\NetworkExchangeProxyFactoryImpl.class

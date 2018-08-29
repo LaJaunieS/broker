@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.uw.spl</groupId>
-  <artifactId>cp130-5</artifactId>
+  <artifactId>cp130-6</artifactId>
   <packaging>jar</packaging>
-  <version>5.0</version>
+  <version>6.0</version>
   <name>cp130</name>
 
   <properties>

@@ -29,7 +29,6 @@ import edu.uw.ext.framework.exchange.StockQuote;
 import edu.uw.ext.framework.order.MarketBuyOrder;
 import edu.uw.ext.framework.order.MarketSellOrder;
 import edu.uw.ext.framework.order.Order;
-import edu.uw.spl.exchange.NetworkExchangeAdapter.CommandHandler;
 
 /**Provides functionality of the exchange through a network connection*/
 public class NetworkExchangeAdapter implements ExchangeAdapter {
@@ -38,12 +37,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     
     /**The stock exchange serviced by this network adapter*/
     private StockExchange exchange;
-    
-    /**Ip address this exchange adapter used to propagate change event messages*/
-    private String eventIp;
-    
-    /**port this exchange adapter will use to propagate change event messages*/
-    private int eventPort;
     
     /**The multicast socket*/
     private MulticastSocket eventSocket;
@@ -65,7 +58,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     public NetworkExchangeAdapter(StockExchange exchange,
                                         String eventIp,
                                         int eventPort,
-                                        int commandPort) throws UnknownHostException, SocketException {
+                                        int commandPort) 
+                                                throws UnknownHostException, SocketException {
         this.exchange = exchange;
         InetAddress multicastGroup = InetAddress.getByName(eventIp);
         
@@ -77,12 +71,13 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
         
         /*Attempt to initiate a connection and join group*/
         try {
-            eventSocket = new MulticastSocket();
-            eventSocket.setTimeToLive(4);
-            /*join the multicast group*/
-            group = InetAddress.getByName(eventIp);
+            this.eventSocket = new MulticastSocket();
+            this.eventSocket.setTimeToLive(4);
             
-            eventSocket.joinGroup(group);
+            /*join the multicast group*/
+            this.group = InetAddress.getByName(eventIp);
+            this.eventSocket.joinGroup(group);
+            
             if (log.isInfoEnabled()) {
                 log.info("Multicasting events to address {}",group.getHostAddress());
             }
@@ -92,7 +87,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
             new Thread(new CommandListener(commandPort, exchange)).start();
             
         } catch (IOException ex) {
-            ex.printStackTrace();
+            log.warn("There was an error initiating the event listener socket",ex);
         }
         
         this.exchange.addExchangeListener(this);
@@ -105,7 +100,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     public void exchangeClosed(ExchangeEvent event) {
         log.info("****Market closed****");
         this.multicastEvent(ProtocolConstants.CLOSED_EVENT.toString());
-        this.exchange.removeExchangeListener(this);
     }
 
     /** The exchange has opened- add listeners to receive price change events and multicast them
@@ -116,8 +110,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     public void exchangeOpened(ExchangeEvent event) {
         log.info("****Market open****");
         this.multicastEvent(ProtocolConstants.OPEN_EVENT.toString());
-        this.exchange.addExchangeListener(this);
-        
     }
 
     /** A price change for a ticker has occurred. Multicast the event to brokers
@@ -125,7 +117,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
      */
     @Override
     public void priceChanged(ExchangeEvent event) {
-        final CharSequence symbol = event.getTicker();
+        final String symbol = event.getTicker();
         final int price = event.getPrice();
         final String msg = String.join(ProtocolConstants.ELEMENT_DELIMITER,
                 ProtocolConstants.PRICE_CHANGE_EVENT,
@@ -141,8 +133,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
      */
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-        
+        this.exchange.removeExchangeListener(this);
+        this.eventSocket.close();
     }
     
     /**Creates a new packet using data from the event and sends to the multicast socket
@@ -150,18 +142,19 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
     private synchronized void multicastEvent(final String msg) {
         byte[] buffer;
         try {
-            buffer = msg.getBytes(ProtocolConstants.ENCODING.toString());
+            buffer = msg.getBytes(ProtocolConstants.ENCODING);
             datagramPacket.setData(buffer);
             datagramPacket.setLength(buffer.length);
             
         } catch (UnsupportedEncodingException e1) {
-            // TODO Auto-generated catch block
+            log.warn("Unable to encode event message bytes using {}",ProtocolConstants.ENCODING);
             e1.printStackTrace();
         }
         try {
             this.eventSocket.send(datagramPacket);
             log.info("Sent event for: {}",msg);
         } catch (IOException e) {
+            log.warn("There was an error multicasting event message: {}",msg);
             e.printStackTrace();
         }
     }
@@ -172,7 +165,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
      * @author slajaunie
      *
      */
-    class CommandHandler implements Runnable {
+    private class CommandHandler implements Runnable {
         private final Logger log = LoggerFactory.getLogger(CommandHandler.class);
         
         /**The exchange the client will be interacting with*/
@@ -210,11 +203,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                 
                 /*Receive a command...*/
                 command = br.readLine();
+                
                 /*....Send a response*/
-                /*An array consisting of the individual portions of a command*/
-                //Need to both get readLine and match it to a string in the constants-
-                //two operations need to accomplish without advancing cursor
-                    /*Read and capture a command from the socket input stream*/
                 while (command !=null) {
                     log.info("Received command: {}",command);
                     
@@ -226,23 +216,23 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                             /*Return the current state of the exchange*/
                             log.info("Get state command received");
                             response = doGetState();
-                        
                             break;
+                            
                         case "GET_TICKERS_CMD":
                             //see notes:
                             log.info("Get tickers command received");
                             
                             /*Server will format into a string response, ie BA:F:PFG...*/
                             response = doGetTickers();
-                        
                             break;
+                            
                         case "GET_QUOTE_CMD":
                             /*Return the current price of the symbol in the command*/
                             String ticker = elements[ProtocolConstants.QUOTE_CMD_TICKER_ELEMENT];
                             log.info("Get quote command received for ticker {}",ticker);
                             response = doGetQuote(ticker);
-                            
                             break;
+                            
                         case "EXECUTE_TRADE_CMD":
                             /*Exceute the trade on the given account and return the 
                              * execution price
@@ -255,14 +245,14 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                                                     elements[ProtocolConstants.EXECUTE_TRADE_CMD_SHARES_ELEMENT]);
                             
                             response = doExecuteTrade(elements);
-                            
                             break;
+                            
                         default:
                             log.warn("Command not recognized: {}",command);
                             /*Will just send the default response (invalid command)*/
                             writer.println(response);
                             writer.flush();
-                        
+                            break;
                         }
                         log.info("Responded to client command with {}",response);
                         writer.println(response);
@@ -272,12 +262,14 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     }
                     
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.warn("There was an error obtaining the socket's input/output stream",e);
                 } finally {
                     try {
-                        this.socket.close();
+                        if (this.socket!=null) {
+                            this.socket.close();
+                        }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.warn("Unable to close socket",e);
                     }
                 }
                 
@@ -298,9 +290,8 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
              * @return a String consisting of the get tickers response
              */
             private String doGetTickers() {
-                final String[] tickers = exchange.getTickers();
                 final String response = String.join(ProtocolConstants.ELEMENT_DELIMITER,
-                                                    tickers);
+                                                    exchange.getTickers());
                 return response;
             }
             
@@ -315,6 +306,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                                             quote.getPrice();
                 String response = Integer.toString(price);
                 log.info("Sending quote: {} at {}",quote.getTicker(),quote.getPrice());
+                
                 return response;
             }
             
@@ -381,7 +373,7 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                     serverSocket = new ServerSocket(commandPort);
                     log.info("Command socket opened at port {}",commandPort);
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    log.warn("Unable to open command socket at port {}",commandPort);
                     e.printStackTrace();
                 }
                 
@@ -407,18 +399,20 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                         new Thread(handler).start();
                     }
                 } catch (IOException ex) {
-                    if (serverSocket!= null && serverSocket.isClosed()) {
-                        log.warn("There was an error accepting the command connection", ex);
+                    if (serverSocket!= null && !serverSocket.isClosed()) {
+                        log.warn("There was an error accepting the command connection. "
+                                + "The socket is not currently closed.",ex);
+                    } else {
+                        log.warn("There was a server error",ex);
                     }
                 }
                 finally {
                     listening = false;
-                    if (serverSocket != null && serverSocket.isClosed()) {
-                            this.close();
-                            serverSocket = null;
-                        
+                    if (serverSocket != null && !serverSocket.isClosed()) {
+                        /*closes the server socket and client socket*/
+                        this.close();
+                        serverSocket = null;
                     }
-                    //if providing an excecutor initiate shutdown()
                     this.close();
                 }
             }
@@ -438,7 +432,6 @@ public class NetworkExchangeAdapter implements ExchangeAdapter {
                         client = null;
                         serverSocket = null;
                     }
-
                 }
             }
         }

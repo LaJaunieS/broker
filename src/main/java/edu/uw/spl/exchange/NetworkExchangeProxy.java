@@ -58,8 +58,6 @@ public class NetworkExchangeProxy implements StockExchange {
     /**The event listener list that holds listeners for exchange events*/
     private EventListenerList listenerList = new EventListenerList();
     
-    /**The socket where commands will be transmitted*/
-    private Socket commandSocket;
     
     /**Constructor
      * @param eventIpAddress the multicast IP address to connect to
@@ -80,14 +78,6 @@ public class NetworkExchangeProxy implements StockExchange {
         
         new Thread(this.eventProcessor).start();
         
-        try {
-            this.commandSocket = new Socket(this.commandIpAddress, this.commandPort);
-            log.info("Command Socket connected at port {}",this.commandSocket.getPort());
-            log.info("Command Socked opened after initilization? {}",!(this.commandSocket.isClosed()));
-        } catch (IOException e) {
-            log.warn("Error connecting command socket at port {}",cmdPort);
-            e.printStackTrace();
-        }
         
     }
     
@@ -133,7 +123,7 @@ public class NetworkExchangeProxy implements StockExchange {
                     break;
 
                 default:
-                    log.warn("Attempted to fire an unknown exchange event: "
+                    log.warn("Sent an unknown exchange event: "
                                  + event.getEventType());
                     break;
                 }
@@ -151,7 +141,6 @@ public class NetworkExchangeProxy implements StockExchange {
      */
     @Override
     public int executeTrade(Order order) {
-        //Tell the broker to execute a trade
         //Command format EXECUTE_TRADE_CMD:BUY_ORDER|SELL_ORDER:accountId:symbol:shares
         final String orderType = order.isBuyOrder()? ProtocolConstants.BUY_ORDER: 
                                                     ProtocolConstants.SELL_ORDER;
@@ -160,7 +149,7 @@ public class NetworkExchangeProxy implements StockExchange {
         final int shares = order.getNumberOfShares();
         final String response;
         
-        //Build a command
+        /*Build the command*/
         final String command = String.join(ProtocolConstants.ELEMENT_DELIMITER,
                                         ProtocolConstants.EXECUTE_TRADE_CMD,
                                         orderType,
@@ -168,8 +157,8 @@ public class NetworkExchangeProxy implements StockExchange {
                                         ticker,
                                         Integer.toString(shares));
         response = this.transmitCommand(command);
-        //return the price the order was executed at, as received from the server/exchange
-        //response from server will be "-1" if stock symbol not found
+        /*return the price the order was executed at, as received from the server/exchange
+        response from server will be "-1" if stock symbol not found*/
         return Integer.parseInt(response);
     }
 
@@ -184,7 +173,8 @@ public class NetworkExchangeProxy implements StockExchange {
         /*Command format: GET_QUOTE_CMD:symbol*/
         StockQuote quote;
         final String response;
-        int price; 
+        /*Default value in case there was a failure getting response back from server*/
+        int price = Integer.parseInt(ProtocolConstants.INVALID_STOCK); 
         
         /*Build a command*/
         final String command = String.join(ProtocolConstants.ELEMENT_DELIMITER,
@@ -225,12 +215,9 @@ public class NetworkExchangeProxy implements StockExchange {
      */
     @Override
     public boolean isOpen() {
-        /*Send exchange state query command*/
-        /*Command format GET_STATE_CMD*/
+       /*Command format GET_STATE_CMD*/
         /*Should respond "OPEN_STATE|CLOSED_STATE*/
         String response = this.transmitCommand(ProtocolConstants.GET_STATE_CMD);
-        log.info("Exchange is open?: {}",response);
-        
         final boolean state = ProtocolConstants.OPEN_STATE.equals(response);
         return state;
     }
@@ -245,26 +232,24 @@ public class NetworkExchangeProxy implements StockExchange {
         //build a string command and write to the output stream on the exchange socket
         //also capture the response or null
         String response = null;
-        try {
-            final OutputStream os = this.commandSocket.getOutputStream();
+        try (Socket commandSocket = new Socket(this.commandIpAddress, this.commandPort)){
+            final OutputStream os = commandSocket.getOutputStream();
             final PrintWriter writer = new PrintWriter(os,true);
             
-            final InputStreamReader reader = new InputStreamReader(this.commandSocket.getInputStream(),
+            final InputStreamReader reader = new InputStreamReader(commandSocket.getInputStream(),
                     ProtocolConstants.ENCODING);
             final BufferedReader br = new BufferedReader(reader);
 
-
-            /*Write the command to the output stream*/
+            /*Write the command to the output stream (autoflush enabled)*/
             log.info("Transmitting command: {}",command);
             writer.println(command);
-            writer.flush();
+            
             /*Read the response back from the input stream*/
             response = br.readLine();
             
             log.info("Transmitted, response: {}",response);
-            
         } catch (IOException e) {
-            log.warn("Error transmitting command");
+            log.warn("Error transmitting command: {}",command);
             e.printStackTrace();
         } 
         return response;
@@ -279,9 +264,6 @@ public class NetworkExchangeProxy implements StockExchange {
 
         /**buffer size constant*/
         private final int BUFFER_SIZE = 1024;
-        
-        /**The socket for propagating exchange events*/
-        private MulticastSocket eventSocket; 
         
         /**the multicast IP address for propagating exchange events*/
         private String eventIpAddress;
@@ -302,7 +284,7 @@ public class NetworkExchangeProxy implements StockExchange {
             try {
                 group = InetAddress.getByName(this.eventIpAddress);
             } catch (UnknownHostException e) {
-                // TODO Auto-generated catch block
+                log.warn("Unable to locate IP address for host, event multicast group not initialized");
                 e.printStackTrace();
             }
             log.info("Network Event Processor constructed at address {}, port {}",
@@ -320,70 +302,70 @@ public class NetworkExchangeProxy implements StockExchange {
             log.info("Initializing event listener socket at port {}", this.eventPort);
             
             
-            try {
-                this.eventSocket = new MulticastSocket(eventPort);
+            try (MulticastSocket eventSocket = new MulticastSocket(this.eventPort)){
                 log.info("Event socket {} initialized at port {}",eventSocket, eventPort);
                 eventSocket.joinGroup(this.group);
                 log.info("Socket joined event multicast group at address {}",this.group.getHostAddress());
-            } catch (IOException e2) {
-                e2.printStackTrace();
-            } 
-            //handle the events and fire listeners in response to text commands
-            //received from the packet (parse first)
-            final byte[] buffer =new byte[this.BUFFER_SIZE];
-            final DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            String msg= null;
-            String[] elements = null;
-            String eventType = null;
-            
-            while(true) {
-                /*Receive UDP packets (containing events) from a broker*/
-                try {
+             
+                //handle the events and fire listeners in response to text commands
+                //received from the packet (parse first)
+                final byte[] buffer =new byte[this.BUFFER_SIZE];
+                final DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                String msg= null;
+                String[] elements = null;
+                String eventType = null;
+                
+                while(true) {
+                    /*Receive UDP packets (containing events) from a broker*/
                     eventSocket.receive(packet);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                try {
-                    /*build a command string from the packet data*/
-                    msg = new String(packet.getData(),
-                                                    packet.getOffset(),
-                                                    packet.getLength(),
-                                                    ProtocolConstants.ENCODING);
                     
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                } 
-                //need to handle potential null pointer exceptions
-                if (msg == null) {
-                    log.warn("No message received");
-                }
-                /*Split up the commands in order to parse*/
-                elements = msg.split(ProtocolConstants.ELEMENT_DELIMITER.toString());
-                eventType = elements[ProtocolConstants.CMD_ELEMENT]; 
-                switch(eventType) {
-                    case "OPEN_EVENT":
-                        fireExchangeEvent(ExchangeEvent.newOpenedEvent(this));
-                        log.info("Received market open event, notifying listeners");
-                        break;
-                    case "CLOSED_EVENT":
-                        fireExchangeEvent(ExchangeEvent.newClosedEvent(this));
-                        log.info("Received market closed event, notifying listeners");
-                        break;
-                    case "PRICE_CHANGE_EVENT":
-                        /*expected format: PRICE_CHANGE_EVENT:ticker:price*/
-                        final String ticker = elements[ProtocolConstants.PRICE_CHANGE_EVENT_TICKER_ELEMENT];
-                        final String priceStr = elements[ProtocolConstants.PRICE_CHANGE_EVENT_PRICE_ELEMENT];
-                        log.info("Received price change event for {}:{}",ticker,priceStr);
-                        /*default will be -1, will be changed if set to a valid ticker*/
-                        int price = -1;
-                        price = Integer.parseInt(priceStr);
-                        fireExchangeEvent(ExchangeEvent.newPriceChangedEvent(this,ticker,price));
+                    try {
+                        /*build a command string from the packet data*/
+                        msg = new String(packet.getData(),
+                                                        packet.getOffset(),
+                                                        packet.getLength(),
+                                                        ProtocolConstants.ENCODING);
                         
-                        break;
-                    default: 
-                        log.warn("Invalid event command- command not recognized");
+                    } catch (UnsupportedEncodingException e) {
+                        log.warn("Unable to encode event message bytes using {}",ProtocolConstants.ENCODING);
+                        e.printStackTrace();
+                    } 
+                    //need to handle potential null pointer exceptions
+                    if (msg == null) {
+                        log.warn("No message received");
+                    }
+                    /*Split up the commands in order to parse*/
+                    elements = msg.split(ProtocolConstants.ELEMENT_DELIMITER.toString());
+                    eventType = elements[ProtocolConstants.CMD_ELEMENT]; 
+                    switch(eventType) {
+                        case "OPEN_EVENT":
+                            fireExchangeEvent(ExchangeEvent.newOpenedEvent(this));
+                            log.info("Received market open event, notifying listeners");
+                            break;
+                        case "CLOSED_EVENT":
+                            fireExchangeEvent(ExchangeEvent.newClosedEvent(this));
+                            log.info("Received market closed event, notifying listeners");
+                            break;
+                        case "PRICE_CHANGE_EVENT":
+                            /*expected format: PRICE_CHANGE_EVENT:ticker:price*/
+                            final String ticker = elements[ProtocolConstants.PRICE_CHANGE_EVENT_TICKER_ELEMENT];
+                            final String priceStr = elements[ProtocolConstants.PRICE_CHANGE_EVENT_PRICE_ELEMENT];
+                            log.info("Received price change event for {}:{}",ticker,priceStr);
+                            /*default will be -1, will be changed if set to a valid ticker*/
+                            int price = -1;
+                            price = Integer.parseInt(priceStr);
+                            fireExchangeEvent(ExchangeEvent.newPriceChangedEvent(this,ticker,price));
+                            
+                            break;
+                        default: 
+                            log.warn("Invalid event command- command not recognized");
+                    }
                 }
-            }    
+            } catch (IOException e2) {
+                log.warn("Unable to initialize event multicast socket, or join the multicast group"
+                        + "at port {}",eventPort);
+                e2.printStackTrace();
+            }
         }
     }
 }

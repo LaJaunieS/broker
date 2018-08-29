@@ -7,8 +7,9 @@ import test.AccountManagerTest;
 import test.AccountTest;
 import test.BrokerTest;
 import test.DaoTest;
+import test.PrivateMessageCodecTest;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({AccountTest.class, AccountManagerTest.class, DaoTest.class, BrokerTest.class})
+@Suite.SuiteClasses({PrivateMessageCodecTest.class})
 public class TestSuite{
 }
