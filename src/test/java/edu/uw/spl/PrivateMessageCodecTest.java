@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.uw.ext.framework.crypto.PrivateMessageTriple;
 import edu.uw.ext.framework.order.ClientOrder;
-import edu.uw.spl.crypto.PrivateMessageCodecImpl;
 import edu.uw.ext.framework.crypto.PrivateMessageCodec;
 
 /**
@@ -34,7 +33,7 @@ public class PrivateMessageCodecTest {
     @Test
     public void codecTest() throws Exception {
         appContext = new ClassPathXmlApplicationContext("context.xml");
-        PrivateMessageCodecImpl codec = appContext.getBean("PrivateMessageCodec", PrivateMessageCodecImpl.class);
+        PrivateMessageCodec codec = appContext.getBean("PrivateMessageCodec", PrivateMessageCodec.class);
 
         ClientOrder order1 = new ClientOrder("tony", ClientOrder.Type.BUY, "TYRL", 10);
         ClientOrder order2 = new ClientOrder("pepper", ClientOrder.Type.BUY, "CDYN", 20, 5000);
@@ -71,7 +70,6 @@ public class PrivateMessageCodecTest {
                        signerKeyName, signerPasswd, 
                        clientTrustStoreName, clientTrustStorePasswd, brokerCertName);
 
-        log.info("Encipher successful");
         // Parameters for getting the broker private key
         String brokerKeyStoreName = "brokerKey.jck";
         char[] brokerStorePasswd = "brokerStorePass".toCharArray();
@@ -82,13 +80,6 @@ public class PrivateMessageCodecTest {
         String brokerTrustStoreName = "brokerTrust.jck";
         char[] brokerTrustStorePasswd = "brokerTrustPass".toCharArray();
         String clientCertName = "clientCert";
-        
-//        log.info("Message:{}",message);
-//        log.info("Broker key store name: {}",brokerKeyStoreName);
-//        log.info("Broker key store password: {}",brokerStorePasswd.toString());
-//        log.info("Broker private key name: {}",brokerPrivKeyName);
-//        log.info("Broker private key password: {}",brokerPrivKeyPasswd.toString());
-//        
         
         byte[] plaintext =  codec.decipher(message,
                                            brokerKeyStoreName, brokerStorePasswd, 
